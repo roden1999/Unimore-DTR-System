@@ -1,90 +1,70 @@
 import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
-import AppBar from '@material-ui/core/AppBar';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import Divider from '@material-ui/core/Divider';
-import Drawer from '@material-ui/core/Drawer';
-import Hidden from '@material-ui/core/Hidden';
-import IconButton from '@material-ui/core/IconButton';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Badge from '@material-ui/core/Badge';
-import { Mail as MailIcon, PeopleAlt, HomeWork, EventNote, LocalAtm, MoneyOff, Today, AccountCircle, PeopleAltSharp } from '@material-ui/icons/';
+import {
+    AppBar, CssBaseline, Divider, Drawer, IconButton,
+    Menu, MenuItem, List, ListItem, ListItemIcon, ListItemText,
+    Badge, Toolbar, Typography, useTheme, Hidden
+} from '@material-ui/core';
+import {
+    PeopleAlt, HomeWork, EventNote,
+    Today, AccountCircle, PeopleAltSharp
+} from '@material-ui/icons';
 import MenuIcon from '@material-ui/icons/Menu';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 
 import Employee from "./employee";
 import Department from "./department";
 import TimeLogs from "./timeLogs";
 import HolidaySchedule from "./holidaySchedule";
-import SalaryAndDeduction from "./salaryAndDeductions";
-import Payroll from "./payroll";
 import User from "./user";
 import UserContext from './context/userContext';
 
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-        display: 'flex',
-    },
-    drawer: {
-        [theme.breakpoints.up('sm')]: {
-            width: drawerWidth,
-            flexShrink: 0,
-        },
-    },
+    root: { display: 'flex' },
+
     appBar: {
-        [theme.breakpoints.up('sm')]: {
-            width: `calc(100% - ${drawerWidth}px)`,
-            marginLeft: drawerWidth,
-        },
+        zIndex: theme.zIndex.drawer + 1,
     },
-    title: {
-        flexGrow: 1,
+    appBarShift: {
+        marginLeft: drawerWidth,
+        width: `calc(100% - ${drawerWidth}px)`
     },
-    menuButton: {
-        marginRight: theme.spacing(2),
-        [theme.breakpoints.up('sm')]: {
-            display: 'none',
-        },
-    },
-    // necessary for content to be below app bar
+
+    menuButton: { marginRight: theme.spacing(2) },
+
+    drawerPaper: { width: drawerWidth },
+
     toolbar: theme.mixins.toolbar,
-    drawerPaper: {
-        width: drawerWidth,
-    },
+
     content: {
         flexGrow: 1,
         padding: theme.spacing(3),
         backgroundColor: '#C4C4C4C4',
-        height: '100%',
         minHeight: '100vh',
-        maxHeight: '100vh'
+        marginLeft: 0,
+        transition: "margin .3s",
+    },
+    contentShift: {
+        marginLeft: drawerWidth,
     },
 
-    customBadge: {
-        backgroundColor: "#1AEC02",
-        color: "white"
-    }
+    customBadge: { backgroundColor: "#1AEC02", color: "white" }
 }));
 
 function Main(props) {
     const { window } = props;
     const classes = useStyles();
     const theme = useTheme();
-    const { userData, setUserData } = useContext(UserContext);
+    const { setUserData } = useContext(UserContext);
+
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(true);
     const [pageName, setPageName] = useState("Employee");
     const [name, setName] = useState("");
     const [role, setRole] = useState("");
-    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [anchorEl, setAnchorEl] = useState(null);
 
     useEffect(() => {
         const data = sessionStorage.getItem('page');
@@ -94,101 +74,57 @@ function Main(props) {
         setRole(user.role);
         setName(user.Name);
     }, []);
+
     useEffect(() => {
         sessionStorage.setItem('page', pageName);
-    });
+    }, [pageName]);
 
-    const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
-    };
+    const safeWindow = (typeof window !== "undefined" && window.innerWidth) 
+    ? window.innerWidth 
+    : 1024;
 
-    const handlePage = (value) => {
-        setPageName(value);
-    }
+
+    const toggleDesktopDrawer = () => setDrawerOpen(!drawerOpen);
+    const toggleMobileDrawer = () => setMobileOpen(!mobileOpen);
 
     const logOut = () => {
-        setUserData({
-            token: undefined,
-            user: undefined
-        });
-        sessionStorage.setItem("auth-token", "");
-        sessionStorage.setItem("userData", "");
-        sessionStorage.setItem("user", "");
-        sessionStorage.setItem("page", "Employee");
-        // Storage.empty();
-    }
-
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-        setAnchorEl(null);
+        setUserData({ token: undefined, user: undefined });
+        sessionStorage.clear();
     };
 
     const drawer = (
         <div>
             <div className={classes.toolbar} style={{ display: 'flex', justifyContent: 'center' }}>
-                <img src="unimore-logo-landscape.png" width='200' height='60' />
+                <img src="unimore-logo-landscape.png" width='200' height='60' alt="" />
             </div>
 
             <Divider />
 
             <List>
-                <ListItem button onClick={() => handlePage("Employee")}>
-                    <ListItemIcon>{<PeopleAlt />}</ListItemIcon>
-                    <ListItemText primary={"Employee"} />
+                <ListItem button onClick={() => setPageName("Employee")}>
+                    <ListItemIcon><PeopleAlt /></ListItemIcon>
+                    <ListItemText primary="Employee" />
                 </ListItem>
-            </List>
-            <List>
-                <ListItem button onClick={() => handlePage("Department")}>
-                    <ListItemIcon>{<HomeWork />}</ListItemIcon>
-                    <ListItemText primary={"Department"} />
+                <ListItem button onClick={() => setPageName("Department")}>
+                    <ListItemIcon><HomeWork /></ListItemIcon>
+                    <ListItemText primary="Department" />
                 </ListItem>
-            </List>
-            <List>
-                <ListItem button onClick={() => handlePage("Time Logs")}>
-                    <ListItemIcon>{<EventNote />}</ListItemIcon>
-                    <ListItemText primary={"Time Logs"} />
+                <ListItem button onClick={() => setPageName("Time Logs")}>
+                    <ListItemIcon><EventNote /></ListItemIcon>
+                    <ListItemText primary="Time Logs" />
                 </ListItem>
-            </List>
-            <List>
-                <ListItem button onClick={() => handlePage("Holiday Schedule")}>
-                    <ListItemIcon>{<Today />}</ListItemIcon>
-                    <ListItemText primary={"Holiday Schedule"} />
+                <ListItem button onClick={() => setPageName("Holiday Schedule")}>
+                    <ListItemIcon><Today /></ListItemIcon>
+                    <ListItemText primary="Holiday Schedule" />
                 </ListItem>
+
+                {role === "Administrator" &&
+                    <ListItem button onClick={() => setPageName("Users")}>
+                        <ListItemIcon><PeopleAltSharp /></ListItemIcon>
+                        <ListItemText primary="Users" />
+                    </ListItem>
+                }
             </List>
-
-            <Divider />
-
-            {/*role === "Administrator" || role === "HR" ?
-                <List>
-                    <List>
-                        <ListItem button onClick={() => handlePage("Payroll")}>
-                            <ListItemIcon>{<LocalAtm />}</ListItemIcon>
-                            <ListItemText primary={"Payroll"} />
-                        </ListItem>
-                        <ListItem button onClick={() => handlePage("Salary & Deductions")}>
-                            <ListItemIcon>{<MoneyOff />}</ListItemIcon>
-                            <ListItemText primary={"Salary & Deductions"} />
-                        </ListItem>
-                    </List>
-                </List> :
-                <></>
-            */}
-
-            <Divider />
-
-            {role === "Administrator" &&
-                <List>
-                    <List>
-                        <ListItem button onClick={() => handlePage("Users")}>
-                            <ListItemIcon>{<PeopleAltSharp />}</ListItemIcon>
-                            <ListItemText primary={"Users"} />
-                        </ListItem>
-                    </List>
-                </List>
-            }
         </div>
     );
 
@@ -197,127 +133,89 @@ function Main(props) {
     return (
         <div className={classes.root}>
             <CssBaseline />
-            <AppBar position="fixed" className={classes.appBar}>
+
+            <AppBar
+                position="fixed"
+                className={drawerOpen ? classes.appBarShift : classes.appBar}
+            >
                 <Toolbar>
+
                     <IconButton
                         color="inherit"
-                        aria-label="open drawer"
                         edge="start"
-                        onClick={handleDrawerToggle}
+                        onClick={() => {
+                            if (safeWindow < 960) toggleMobileDrawer();
+                            else toggleDesktopDrawer();
+                        }}
                         className={classes.menuButton}
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" noWrap className={classes.title}>
+
+                    <Typography variant="h6" style={{ flexGrow: 1 }}>
                         {pageName}
                     </Typography>
-                    <IconButton
-                        aria-label="account of current user"
-                        aria-controls="menu-appbar"
-                        aria-haspopup="true"
-                        edge="end"
-                        onClick={handleClick}
-                        color="inherit"
-                    >
-                        <Badge variant="dot" color="secondary" classes={{ badge: classes.customBadge }}
-                            anchorOrigin={{
-                                vertical: 'bottom',
-                                horizontal: 'right',
-                            }}
-                        >
+
+                    <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)}>
+                        <Badge variant="dot" color="secondary" classes={{ badge: classes.customBadge }}>
                             <AccountCircle />
                         </Badge>
-                        <div>
-                            <ListItemText style={{ marginLeft: 7 }} primary={name}
-                                secondary={<label style={{ fontSize: 12, color: '#BEBFC1' }}>{role}</label>}
-                            />
-                        </div>
+                        <ListItemText style={{ marginLeft: 7 }} primary={name}
+                            secondary={<span style={{ fontSize: 12, color: '#BEBFC1' }}>{role}</span>}
+                        />
                     </IconButton>
+
                     <Menu
-                        id="simple-menu"
                         anchorEl={anchorEl}
-                        keepMounted
                         open={Boolean(anchorEl)}
-                        onClose={handleClose}
+                        onClose={() => setAnchorEl(null)}
                     >
                         <MenuItem onClick={logOut}>Logout</MenuItem>
                     </Menu>
-
                 </Toolbar>
             </AppBar>
-            <nav className={classes.drawer} aria-label="mailbox folders">
-                {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
-                <Hidden smUp implementation="css">
-                    <Drawer
-                        container={container}
-                        variant="temporary"
-                        anchor={theme.direction === 'rtl' ? 'right' : 'left'}
-                        open={mobileOpen}
-                        onClose={handleDrawerToggle}
-                        classes={{
-                            paper: classes.drawerPaper,
-                        }}
-                        ModalProps={{
-                            keepMounted: true, // Better open performance on mobile.
-                        }}
-                    >
-                        {drawer}
-                    </Drawer>
-                </Hidden>
-                <Hidden xsDown implementation="css">
-                    <Drawer
-                        classes={{
-                            paper: classes.drawerPaper,
-                        }}
-                        variant="permanent"
-                        open
-                    >
-                        {drawer}
-                    </Drawer>
-                </Hidden>
-            </nav>
-            <main className={classes.content}>
+
+            {/* Mobile drawer */}
+            <Hidden mdUp>
+                <Drawer
+                    container={container}
+                    variant="temporary"
+                    anchor="left"
+                    open={mobileOpen}
+                    onClose={toggleMobileDrawer}
+                    classes={{ paper: classes.drawerPaper }}
+                    ModalProps={{ keepMounted: true }}
+                >
+                    {drawer}
+                </Drawer>
+            </Hidden>
+
+            {/* Desktop drawer */}
+            <Hidden smDown>
+                <Drawer
+                    variant="persistent"
+                    open={drawerOpen}
+                    anchor="left"
+                    classes={{ paper: classes.drawerPaper }}
+                >
+                    {drawer}
+                </Drawer>
+            </Hidden>
+
+            {/* MAIN CONTENT */}
+            <main className={`${classes.content} ${drawerOpen ? classes.contentShift : ""}`}>
                 <div className={classes.toolbar} />
 
-                {pageName === "Employee" &&
-                    <Employee />
-                }
-
-                {pageName === "Department" &&
-                    <Department />
-                }
-
-                {pageName === "Time Logs" &&
-                    <TimeLogs />
-                }
-
-                {pageName === "Holiday Schedule" &&
-                    <HolidaySchedule />
-                }
-
-                {/*pageName === "Salary & Deductions" && role === "Administrator" || pageName === "Salary & Deductions" && role === "HR" ?
-                    <SalaryAndDeduction /> : <></>
-                */}
-
-                {/*pageName === "Payroll" && role === "Administrator" || pageName === "Payroll" && role === "HR" ?
-                    <Payroll /> : <></>
-                */}
-
-                {pageName === "Users" && role === "Administrator" &&
-                    <User />
-                }
+                {pageName === "Employee" && <Employee />}
+                {pageName === "Department" && <Department />}
+                {pageName === "Time Logs" && <TimeLogs />}
+                {pageName === "Holiday Schedule" && <HolidaySchedule />}
+                {pageName === "Users" && role === "Administrator" && <User />}
 
             </main>
         </div>
     );
 }
 
-Main.propTypes = {
-    /**
-     * Injected by the documentation to work in an iframe.
-     * You won't need it on your project.
-     */
-    window: PropTypes.func,
-};
-
+Main.propTypes = { window: PropTypes.func };
 export default Main;
