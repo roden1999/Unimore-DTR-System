@@ -1,288 +1,188 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import clsx from 'clsx';
-import Card from '@material-ui/core/Card';
-import Typography from '@material-ui/core/Typography';
-import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Popover from '@material-ui/core/Popover';
-import { Visibility, VisibilityOff } from '@material-ui/icons/';
-import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import FilledInput from '@material-ui/core/FilledInput';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
-import { useSpring, animated } from 'react-spring';
-import 'react-toastify/dist/ReactToastify.css'
-import { TextField } from '@material-ui/core';
-
+import React, { useState, useContext } from 'react';
+import {
+  Card,
+  TextField,
+  Typography,
+  Button,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  Popover,
+  Box
+} from '@material-ui/core';
+import { Visibility, VisibilityOff } from '@material-ui/icons';
 import UserContext from './context/userContext';
-const axios = require('axios');
-const moment = require("moment");
+import axios from 'axios';
+import moment from 'moment';
 
-const useStyles = makeStyles((theme) => ({
-    typography: {
-        padding: theme.spacing(2),
-    },
-}));
+const Login = () => {
+  const { setUserData } = useContext(UserContext);
 
-const Login = (props) => {
-    const classes = useStyles();
-    const { setUserData } = useContext(UserContext);
-    const [name, setName] = useState("");
-    const [resgisterUserName, setRegisterUserName] = useState("");
-    const [registerPassword, setRegisterPassword] = useState("");
-    const [userName, setUserName] = useState("");
-    const [password, setPassword] = useState("");
-    const [passwordCheck, setPasswordCheck] = useState("");
-    const [errSignInMsg, setErrSignInMsg] = useState("");
-    const [errRegisterMsg, setErrRegisterMsg] = useState("");
-    const [signInLoader, setSignInLoader] = useState(false);
-    const [registerLoader, setRegisterLoader] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [anchorEl, setAnchorEl] = React.useState(null);
-    const [visiblePassword, setVisiblePassword] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [password, setPassword] = useState("");
+  const [visiblePassword, setVisiblePassword] = useState(false);
+  const [signInLoader, setSignInLoader] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
 
-    const onLogin = async () => {
-        setSignInLoader(true);
-        const url = window.apihost + "login";
-        const loginUser = {
-            "userName": userName,
-            "password": password
-        }
-        await axios.post(url, loginUser)
-            .then(function (response) {
-                // handle success
-                sessionStorage.setItem("auth-token", response.data.token);
-                sessionStorage.setItem("userData", JSON.stringify(response.data));
-                sessionStorage.setItem("user", JSON.stringify(response.data.user));
+  const [anchorEl, setAnchorEl] = useState(null);
 
-                //Detailed Logs
-                var emp = { "emp": [] };
-                var dept = { "dept": [] };
-                var remarks = { "remarks": [] };
-                sessionStorage.setItem("dlSemp", JSON.stringify(emp));
-                sessionStorage.setItem("dlSdept", JSON.stringify(dept));
-                sessionStorage.setItem("dlSremarks", JSON.stringify(remarks));
-                sessionStorage.setItem("dlSfromDate", moment().startOf('month').format('MM/DD/yyyy').toString());
-                sessionStorage.setItem("dlStoDate", moment().format('MM/DD/yyyy').toString());
+  const onLogin = async () => {
+    setSignInLoader(true);
+    const url = window.apihost + "login";
 
-                //Payroll
-                var emp = { "emp": [] };
-                var dept = { "dept": [] };
-                var remarks = { "type": [] };
-                sessionStorage.setItem("payrollemp", JSON.stringify(emp));
-                sessionStorage.setItem("payrollemp", JSON.stringify(emp));
-                sessionStorage.setItem("payrolldept", JSON.stringify(dept));
-                sessionStorage.setItem("payrollfromDate", moment().startOf('month').format('MM/DD/yyyy').toString());
-                sessionStorage.setItem("payrolltoDate", moment().format('MM/DD/yyyy').toString());
+    await axios.post(url, { userName, password })
+      .then((response) => {
+        sessionStorage.setItem("auth-token", response.data.token);
+        sessionStorage.setItem("userData", JSON.stringify(response.data));
+        sessionStorage.setItem("user", JSON.stringify(response.data.user));
 
-                //Dtr Logs
-                sessionStorage.setItem("dtrSemp", JSON.stringify(emp));
-                sessionStorage.setItem("dtrSdept", JSON.stringify(dept));
-                sessionStorage.setItem("dtrSfromDate", moment().startOf('month').format('MM/DD/yyyy').toString());
-                sessionStorage.setItem("dtrStoDate", moment().format('MM/DD/yyyy').toString());
+        // Default date setup
+        const from = moment().startOf('month').format('MM/DD/yyyy');
+        const to = moment().format('MM/DD/yyyy');
 
-                //Raw Logs
-                sessionStorage.setItem("rawSemp", JSON.stringify(emp));
-                sessionStorage.setItem("rawSfromDate", moment().startOf('month').format('MM/DD/yyyy').toString());
-                sessionStorage.setItem("rawStoDate", moment().format('MM/DD/yyyy').toString());
+        const emptyEmp = JSON.stringify({ emp: [] });
+        const emptyDept = JSON.stringify({ dept: [] });
 
-                setUserData(response.data);
-                setSignInLoader(false);
-            })
-            .catch(err => {
-                const errors = {
-                    msg: err.response.data.message,
-                    status: err.response.status
-                }
-                setErrSignInMsg(err.response.data.message);
-                setSignInLoader(false);
-            });
-    }
+        sessionStorage.setItem("dlSemp", emptyEmp);
+        sessionStorage.setItem("dlSdept", emptyDept);
+        sessionStorage.setItem("dlSfromDate", from);
+        sessionStorage.setItem("dlStoDate", to);
 
-    const handleSignInUserName = (e) => {
-        setUserName(e.target.value);
-        setErrSignInMsg("");
-    }
+        sessionStorage.setItem("payrollemp", emptyEmp);
+        sessionStorage.setItem("payrolldept", emptyDept);
+        sessionStorage.setItem("payrollfromDate", from);
+        sessionStorage.setItem("payrolltoDate", to);
 
-    const handleSignInPassword = (e) => {
-        setPassword(e.target.value);
-        setErrSignInMsg("");
-    }
+        sessionStorage.setItem("dtrSemp", emptyEmp);
+        sessionStorage.setItem("dtrSdept", emptyDept);
+        sessionStorage.setItem("dtrSfromDate", from);
+        sessionStorage.setItem("dtrStoDate", to);
 
-    const onRegister = () => {
-        setRegisterLoader(true);
-        const url = window.apihost + "registration";
-        const newUser = {
-            "name": name,
-            "userName": resgisterUserName,
-            "password": registerPassword,
-            // "passwordCheck": passwordCheck
-        };
-        axios.post(url, newUser)
-            .then(function (response) {
-                // handle success
-                alert("Successfully Registered " + response.data);
-                setRegisterLoader(false);
-            })
-            .catch(err => {
-                const errors = {
-                    msg: err.response.data,
-                    status: err.response.status
-                }
-                setErrRegisterMsg(err.response.data);
-                setRegisterLoader(false);
-            });
-    }
+        sessionStorage.setItem("rawSemp", emptyEmp);
+        sessionStorage.setItem("rawSfromDate", from);
+        sessionStorage.setItem("rawStoDate", to);
 
-    const handleName = (e) => {
-        setName(e.target.value);
-        setErrRegisterMsg("");
-    }
+        setUserData(response.data);
+        setSignInLoader(false);
+      })
+      .catch((err) => {
+        setErrMsg(err.response?.data?.message || "Login failed");
+        setSignInLoader(false);
+      });
+  };
 
-    const handleRegisterUserName = (e) => {
-        setRegisterUserName(e.target.value);
-        setErrRegisterMsg("");
-    }
+  return (
+    <Box
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #4F73FF, #4BC0C8)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: 20
+      }}
+    >
+      <Card
+        style={{
+          width: "100%",
+          maxWidth: 420,
+          padding: 30,
+          borderRadius: 20,
+          backdropFilter: "blur(10px)",
+          background: "rgba(255, 255, 255, 0.85)",
+          boxShadow: "0px 10px 30px rgba(0,0,0,0.2)"
+        }}
+      >
 
-    const handleRegisterPassword = (e) => {
-        setRegisterPassword(e.target.value);
-        setErrRegisterMsg("");
-    }
+        {/* Logo */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
+          <img
+            src="unimore-logo-landscape.png"
+            style={{ width: "70%", height: "auto" }}
+            alt="logo"
+          />
+        </div>
 
-    const handlePasswordChecker = (e) => {
-        setPasswordCheck(e.target.value);
-        setErrRegisterMsg("");
-    }
+        {/* Error message */}
+        {errMsg && (
+          <Typography style={{ color: "red", textAlign: "center", marginBottom: 10 }}>
+            {errMsg}
+          </Typography>
+        )}
 
-    const handleClickShowPassword = () => {
-        setShowPassword(!showPassword);
-    };
+        {/* Username */}
+        <TextField
+          fullWidth
+          variant="filled"
+          label="Username"
+          value={userName}
+          onChange={(e) => setUserName(e.target.value)}
+          style={{ marginBottom: 20 }}
+        />
 
-    const handleMouseDownPassword = (event) => {
-        event.preventDefault();
-    };
+        {/* Password */}
+        <TextField
+          fullWidth
+          variant="filled"
+          label="Password"
+          type={visiblePassword ? "text" : "password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{ marginBottom: 20 }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={() => setVisiblePassword(!visiblePassword)}>
+                  {visiblePassword ? <Visibility /> : <VisibilityOff />}
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
 
-    const handleClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
+        {/* Sign In */}
+        <Button
+          fullWidth
+          variant="contained"
+          color="primary"
+          style={{
+            padding: "12px 0",
+            fontSize: "1rem",
+            borderRadius: 30,
+            textTransform: "none"
+          }}
+          onClick={onLogin}
+          disabled={signInLoader}
+        >
+          {!signInLoader ? "Sign In" : <CircularProgress size={26} />}
+        </Button>
 
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
+        {/* Forgot Password */}
+        <div style={{ textAlign: "center", marginTop: 20 }}>
+          <Typography
+            style={{ cursor: "pointer", fontWeight: 600 }}
+            onClick={(e) => setAnchorEl(e.currentTarget)}
+          >
+            Forgot Password?
+          </Typography>
 
-    const openPopover = Boolean(anchorEl);
-    const popOverId = openPopover ? 'simple-popover' : undefined;
-
-    return (
-        <div style={{
-            height: '100vh',
-            width: '100%',
-            fontFamily: `'Montserrat', sans-serif`,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            alignContent: 'center',
-            background: '#F3F1F1',
-        }}>
-            <Card link style={{ margin: '0 auto', width: '30%' }}>
-                {/* <h1 style={{ textAlign: 'center', marginTop: 10, marginBottom: 10 }}>Logo</h1> */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
-                    <img src="unimore-logo-landscape.png" width="70%" height="90%" style={{ backgroundColor: 'white' }} />
-                </div>
-                <h6 style={{ textAlign: 'center', marginTop: 10, marginBottom: 5, color: 'red' }}>{errSignInMsg}</h6>
-                <div style={{ paddingLeft: 30, paddingRight: 30, }}>
-                    <form autoComplete="off">
-                        <div>
-                            <TextField
-                                fluid
-                                label='Username'
-                                placeholder='username'
-                                id='form-input-first-name'
-                                size='large'
-                                variant="filled"
-                                fullWidth
-                                value={userName}
-                                onChange={handleSignInUserName}
-                            />
-                        </div>
-                        <div style={{ marginTop: 10 }}>
-                            <FormControl fullWidth className={clsx(classes.margin, classes.textField)} variant="filled">
-                                <InputLabel htmlFor="filled-adornment-password">Password</InputLabel>
-                                <FilledInput
-                                    fluid
-                                    label='Password'
-                                    placeholder='password'
-                                    type={visiblePassword === false ? "password" : "text"}
-                                    size='large'
-                                    variant="filled"                                    
-                                    value={password}
-                                    onChange={handleSignInPassword}
-                                    endAdornment={
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                aria-label="toggle password visibility"
-                                                onClick={() => setVisiblePassword(!visiblePassword)}
-                                                onMouseDown={handleMouseDownPassword}
-                                            >
-                                                {visiblePassword !== false ? <Visibility /> : <VisibilityOff />}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    }
-                                />
-                            </FormControl>
-                        </div>
-
-                        <div>
-                            <div style={{ margin: '0 auto', marginTop: 10, display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-                                <Button
-                                    size='large'
-                                    variant='contained'
-                                    style={{ backgroundColor: '#1e88e5', color: '#fff', borderRadius: 20, width: '130px', height: '50px' }}
-                                    disabled={signInLoader}
-                                    onClick={onLogin}
-                                    type='submit'
-                                >
-                                    {signInLoader === false ? "Sign In" : <CircularProgress />}
-                                </Button>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 30 }}>
-                                {/* <a href='#'><b>Forgot Password?</b></a> */}
-                                {/* <Popup
-                                    content='Contact admin to change your password.'
-                                    on='click'
-                                    pinned
-                                    trigger={<a href='#'><b>Forgot Password?</b></a>}
-                                /> */}
-                                <a aria-describedby={popOverId} variant="contained" color="primary" onClick={handleClick}>
-                                    Forgot Password?
-                                </a>
-                                <Popover
-                                    id={popOverId}
-                                    open={openPopover}
-                                    anchorEl={anchorEl}
-                                    onClose={handleClose}
-                                    anchorOrigin={{
-                                        vertical: 'bottom',
-                                        horizontal: 'center',
-                                    }}
-                                    transformOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'center',
-                                    }}
-                                >
-                                    <Typography className={classes.typography}>Contact admin to change your password.</Typography>
-                                </Popover>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </Card>
-        </div >
-    );
-}
+          <Popover
+            open={Boolean(anchorEl)}
+            anchorEl={anchorEl}
+            onClose={() => setAnchorEl(null)}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "center"
+            }}
+          >
+            <Typography style={{ padding: 15 }}>
+              Contact admin to change your password.
+            </Typography>
+          </Popover>
+        </div>
+      </Card>
+    </Box>
+  );
+};
 
 export default Login;

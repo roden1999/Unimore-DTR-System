@@ -49,8 +49,16 @@ function App() {
     checkLogin();
   }, []);
   return (
-    <div className="App">
-      <UserContext.Provider value={{ userData, setUserData }}>
+    <UserContext.Provider value={{ userData, setUserData }}>
+      <div
+        style={{
+          margin: 0,
+          padding: 0,
+          width: '100vw',
+          height: '100vh',
+          overflow: 'hidden',
+        }}
+      >
         {loader === false && userData.user &&
           <Main />
         }
@@ -58,8 +66,8 @@ function App() {
         {loader === false && !userData.user &&
           <Login />
         }
-      </UserContext.Provider>
-    </div>
+      </div>
+    </UserContext.Provider >
   );
 }
 
