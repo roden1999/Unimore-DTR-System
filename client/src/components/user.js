@@ -500,85 +500,91 @@ const Users = () => {
     }
 
     return (
-        <div className={classes.root}>
+        <div style={{ padding: 10, width: '100%', boxSizing: 'border-box' }}>
             <ToastContainer />
-            <Button
-                size='large'
-                onClick={() => setAddModal(true)}
-                style={{ float: 'left' }}
-            >
-                <Add />Add User
-            </Button>
 
-            <div style={{
-                float: 'right', width: '30%', zIndex: 100,
-            }}>
-                <Select
-                    defaultValue={selectedUser}
-                    options={UsersOption(usersOptionsList)}
-                    onChange={e => setSelectedUser(e)}
-                    placeholder='Search...'
-                    isClearable
-                    isMulti
-                    theme={(theme) => ({
-                        ...theme,
-                        // borderRadius: 0,
-                        colors: {
-                            ...theme.colors,
-                            text: 'black',
-                            primary25: '#66c0f4',
-                            primary: '#B9B9B9',
-                        },
-                    })}
-                    styles={customMultiSelectStyle}
-                />
+            {/* Top Controls */}
+            <div
+                style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 20,
+                    gap: '10px',
+                }}
+            >
+                <Button
+                    size='large'
+                    onClick={() => setAddModal(true)}
+                    variant="contained"
+                    style={{ minWidth: 140 }}
+                >
+                    <Add /> Add User
+                </Button>
+
+                <div style={{ flex: 1, minWidth: 200, maxWidth: 400 }}>
+                    <Select
+                        defaultValue={selectedUser}
+                        options={UsersOption(usersOptionsList)}
+                        onChange={e => setSelectedUser(e)}
+                        placeholder='Search...'
+                        isClearable
+                        isMulti
+                        theme={theme => ({
+                            ...theme,
+                            colors: { ...theme.colors, text: 'black', primary25: '#66c0f4', primary: '#B9B9B9' },
+                        })}
+                        styles={customMultiSelectStyle}
+                    />
+                </div>
             </div>
 
-            <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '75vh', maxHeight: '75vh', overflowY: 'scroll' }}>
+            {/* Users Grid */}
+            <div
+                style={{
+                    backgroundColor: '#F4F4F4',
+                    minHeight: '75vh',
+                    maxHeight: '75vh',
+                    overflowY: 'auto',
+                    padding: 10,
+                    boxSizing: 'border-box',
+                }}
+            >
                 <Grid container spacing={3}>
-                    {usersList !== null && usersList.map(x =>
-                        <Grid item xs={3}>
-                            <Card>
+                    {usersList && usersList.map(user => (
+                        <Grid item xs={12} sm={6} md={4} lg={3} key={user.id}>
+                            <Card style={{ height: '100%' }}>
                                 <CardActionArea>
                                     <CardContent>
-                                        <Typography gutterBottom variant="h5" component="h5">
-                                            Name: <strong>{x.name}</strong>
-                                        </Typography>
-                                        <Typography gutterBottom variant="h5" component="h5">
-                                            Username: <strong>{x.userName}</strong>
-                                        </Typography>
-                                        <Typography gutterBottom variant="p" component="h3">
-                                            Role: {x.role}
-                                        </Typography>
+                                        <Typography variant="h6"><strong>Name:</strong> {user.name}</Typography>
+                                        <Typography variant="h6"><strong>Username:</strong> {user.userName}</Typography>
+                                        <Typography variant="body1"><strong>Role:</strong> {user.role}</Typography>
                                     </CardContent>
                                 </CardActionArea>
-                                <CardActions>
-                                    <Button size="small" color="primary" disabled={x.userName === "superadmin" ? true : false} onClick={() => handleOpenEditModal(x)}>
-                                        Edit
-                                    </Button>
-                                    <Button size="small" color="primary" disabled={x.userName === "superadmin" ? true : false} onClick={() => handleOpenChangePassModal(x.id)}>
-                                        Change Password
-                                    </Button>
-                                    <Button size="small" color="primary" disabled={x.userName === "superadmin" ? true : false} onClick={() => onDelete(x.id)}>
-                                        Delete
-                                    </Button>
+                                <CardActions style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                                    <Button size="small" color="primary" disabled={user.userName === "superadmin"} onClick={() => handleOpenEditModal(user)}>Edit</Button>
+                                    <Button size="small" color="primary" disabled={user.userName === "superadmin"} onClick={() => handleOpenChangePassModal(user.id)}>Change Password</Button>
+                                    <Button size="small" color="secondary" disabled={user.userName === "superadmin"} onClick={() => onDelete(user.id)}>Delete</Button>
                                 </CardActions>
                             </Card>
                         </Grid>
+                    ))}
+
+                    {(!usersList || usersList.length === 0) && loader !== true && (
+                        <div style={{ textAlign: 'center', padding: 120, width: '100%' }}>
+                            <h1 style={{ color: "#C4C4C4" }}>No data found!</h1>
+                        </div>
+                    )}
+
+                    {loader && (
+                        <div style={{ margin: '0 auto', textAlign: 'center', width: '100%' }}>
+                            <CircularProgress />
+                        </div>
                     )}
                 </Grid>
-
-                {usersList === null || usersList.length === 0 && loader !== true &&
-                    <div style={{ textAlign: 'center', padding: 120 }}>
-                        <h1 style={{ color: "#C4C4C4" }}>No data found!</h1>
-                    </div>
-                }
-                {loader === true &&
-                    <div style={{ margin: '0 auto', textAlign: 'center' }}>
-                        <CircularProgress />
-                    </div>
-                }
             </div>
+
 
             {/* <TablePagination
                 // rowsPerPageOptions={[10, 25, 100]}
@@ -593,279 +599,279 @@ const Users = () => {
             /> */}
 
             <Modal
-                aria-labelledby="spring-modal-title"
-                aria-describedby="spring-modal-description"
-                className={classes.modal}
                 open={addModal}
                 onClose={handlCloseAddModal}
                 closeAfterTransition
                 BackdropComponent={Backdrop}
-                BackdropProps={{
-                    timeout: 500,
-                }}
+                BackdropProps={{ timeout: 500 }}
             >
                 <Fade in={addModal}>
-                    <div className={classes.modalPaper}>
-                        <div>
-                            <h1>Add Employee</h1>
+                    <div
+                        style={{
+                            background: '#ffffff',
+                            borderRadius: 20,
+                            padding: '30px 25px',
+                            width: '90%',
+                            maxWidth: 500,
+                            margin: 'auto',
+                            outline: 'none',
+                            boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 20,
+                            maxHeight: '90vh', // ensures modal never exceeds viewport
+                            overflowY: 'auto', // scroll inside modal if content too tall
+                            marginTop: 20
+                        }}
+                    >
+                        {/* Header */}
+                        <div style={{ textAlign: 'left' }}>
+                            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Add Employee</h2>
                         </div>
-                        <Divider />
-                        <br />
 
-                        <form noValidate autoComplete="off">
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Name</strong></label><br />
-                                <TextField variant='outlined' size='small' fullWidth placeholder="Name" value={name} onChange={e => setName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
+                        <Divider style={{ marginBottom: 10 }} />
 
-                            <br />
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Role</strong></label><br />
-                                <Select
-                                    defaultValue={role}
-                                    options={RoleOption()}
-                                    onChange={e => setRole(e)}
-                                    placeholder='role'
-                                    theme={(theme) => ({
-                                        ...theme,
-                                        // borderRadius: 0,
-                                        colors: {
-                                            ...theme.colors,
-                                            text: 'black',
-                                            primary25: '#66c0f4',
-                                            primary: '#B9B9B9',
-                                        },
-                                    })}
-                                    styles={customSelectStyle}
-                                />
-                            </div>
+                        {/* Form Fields */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            <label style={{ fontSize: 14, fontWeight: 500 }}>Name</label>
+                            <TextField fullWidth variant="outlined" size="small" value={name} onChange={e => setName(e.target.value)} />
 
-                            <br />
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Username</strong></label><br />
-                                <TextField variant='outlined' size='small' fullWidth placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
+                            <label style={{ fontSize: 14, fontWeight: 500 }}>Role</label>
+                            <Select
+                                defaultValue={role}
+                                options={RoleOption()}
+                                onChange={e => setRole(e)}
+                                placeholder="Select Role"
+                                theme={theme => ({
+                                    ...theme,
+                                    colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
+                                })}
+                                styles={customSelectStyle}
+                            />
 
-                            <br />
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Password</strong></label><br />
-                                <TextField variant='outlined' type="password" size='small' fullWidth placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
+                            <label style={{ fontSize: 14, fontWeight: 500 }}>Username</label>
+                            <TextField fullWidth variant="outlined" size="small" value={userName} onChange={e => setUserName(e.target.value)} />
 
-                            <br />
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Confirm Password</strong></label><br />
-                                <TextField variant='outlined' type="password" size='small' fullWidth placeholder="Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
+                            <label style={{ fontSize: 14, fontWeight: 500 }}>Password</label>
+                            <TextField fullWidth type="password" variant="outlined" size="small" value={password} onChange={e => setPassword(e.target.value)} />
 
-                            <br />
-                            <div>
-                                <Button
-                                    size="large"
-                                    // style={{ float: 'right' }}
-                                    variant="contained"
-                                    color="default"
-                                    onClick={handlCloseAddModal}>
-                                    <b>Cancel</b>
-                                </Button>
-                                <Button
-                                    size="large"
-                                    style={{ marginLeft: 10 }}
-                                    variant="contained"
-                                    color="default"
-                                    startIcon={<Save />}
-                                    onClick={handleAddUser}>
-                                    <b>Submit</b>
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </Fade>
-            </Modal>
-
-            <Modal
-                aria-labelledby="spring-modal-title"
-                aria-describedby="spring-modal-description"
-                className={classes.modal}
-                open={editModal}
-                onClose={handlCloseEditModal}
-                closeAfterTransition
-                BackdropComponent={Backdrop}
-                BackdropProps={{
-                    timeout: 500,
-                }}
-            >
-                <Fade in={editModal}>
-                    <div className={classes.modalPaper}>
-                        <div>
-                            <h1>Edit User</h1>
+                            <label style={{ fontSize: 14, fontWeight: 500 }}>Confirm Password</label>
+                            <TextField fullWidth type="password" variant="outlined" size="small" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
                         </div>
-                        <Divider />
-                        <br />
 
-                        <form noValidate autoComplete="off">
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Name</strong></label><br />
-                                <TextField variant='outlined' size='small' fullWidth placeholder="Name" value={name} onChange={e => setName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
-
-                            <br />
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Role</strong></label><br />
-                                <Select
-                                    defaultValue={role}
-                                    options={RoleOption()}
-                                    onChange={e => setRole(e)}
-                                    placeholder='role'
-                                    theme={(theme) => ({
-                                        ...theme,
-                                        // borderRadius: 0,
-                                        colors: {
-                                            ...theme.colors,
-                                            text: 'black',
-                                            primary25: '#66c0f4',
-                                            primary: '#B9B9B9',
-                                        },
-                                    })}
-                                    styles={customSelectStyle}
-                                />
-                            </div>
-
-                            <br />
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Username</strong></label><br />
-                                <TextField variant='outlined' size='small' fullWidth placeholder="Username" value={userName} onChange={e => setUserName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
-
-                            <br />
-                            <div>
-                                <Button
-                                    size="large"
-                                    // style={{ float: 'right' }}
-                                    variant="contained"
-                                    color="default"
-                                    onClick={handlCloseEditModal}>
-                                    <b>Cancel</b>
-                                </Button>
-                                <Button
-                                    size="large"
-                                    style={{ marginLeft: 10 }}
-                                    variant="contained"
-                                    color="default"
-                                    startIcon={<Save />}
-                                    onClick={handleEditUser}>
-                                    <b>Submit</b>
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </Fade>
-            </Modal>
-
-            <Modal
-                aria-labelledby="spring-modal-title"
-                aria-describedby="spring-modal-description"
-                className={classes.modal}
-                open={deletePopup}
-                onClose={handleCloseDeleteModal}
-                closeAfterTransition
-                BackdropComponent={Backdrop}
-                BackdropProps={{
-                    timeout: 500,
-                }}
-            >
-                <Fade in={deletePopup}>
-                    <div className={classes.modalPaper}>
-                        <div>
-                            <h1>Warning</h1>
-                        </div>
-                        <Divider />
-                        <br />
-
-                        <p>Are you sure you want to delete this User?</p>
-
-                        <br />
-                        <Divider />
-                        <br />
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        {/* Buttons */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
                             <Button
-                                size="large"
-                                // style={{ float: 'right' }}
-                                variant="contained"
-                                color="default"
-                                onClick={handleCloseDeleteModal}>
-                                <b>Cancel</b>
+                                variant="outlined"
+                                onClick={handlCloseAddModal}
+                                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+                            >
+                                Cancel
                             </Button>
                             <Button
-                                size="large"
-                                style={{ marginLeft: 10 }}
                                 variant="contained"
-                                color='secondary'
-                                startIcon={<Delete />}
-                                onClick={handleDeleteUser}>
-                                <b>Delete</b>
+                                color="primary"
+                                startIcon={<Save />}
+                                onClick={handleAddUser}
+                                disabled={loader}
+                                style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
+                            >
+                                Submit
                             </Button>
                         </div>
                     </div>
                 </Fade>
             </Modal>
 
-            <Modal
-                aria-labelledby="spring-modal-title"
-                aria-describedby="spring-modal-description"
-                className={classes.modal}
-                open={changePassModal}
-                onClose={handlCloseChangePassModal}
-                closeAfterTransition
-                BackdropComponent={Backdrop}
-                BackdropProps={{
-                    timeout: 500,
-                }}
-            >
-                <Fade in={changePassModal}>
-                    <div className={classes.modalPaper}>
-                        <div>
-                            <h1>Change Password</h1>
-                        </div>
-                        <Divider />
-                        <br />
+            {/* Edit User Modal */}
+<Modal
+    open={editModal}
+    onClose={handlCloseEditModal}
+    closeAfterTransition
+    BackdropComponent={Backdrop}
+    BackdropProps={{ timeout: 500 }}
+>
+    <Fade in={editModal}>
+        <div
+            style={{
+                background: '#ffffff',
+                borderRadius: 20,
+                padding: '30px 25px',
+                width: '90%',
+                maxWidth: 500,
+                margin: 'auto',
+                outline: 'none',
+                boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 20,
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                marginTop: 20
+            }}
+        >
+            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Edit User</h2>
+            <Divider style={{ marginBottom: 10 }} />
 
-                        <form noValidate autoComplete="off">
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Password</strong></label><br />
-                                <TextField variant='outlined' type="password" size='small' fullWidth placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
-                            <br />
-                            <div>
-                                <label style={{ fontSize: '17px' }}><strong>Confirm Password</strong></label><br />
-                                <TextField variant='outlined' type="password" size='small' fullWidth placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-                            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <label style={{ fontSize: 14, fontWeight: 500 }}>Name</label>
+                <TextField fullWidth variant="outlined" size="small" value={name} onChange={e => setName(e.target.value)} />
 
-                            <br />
-                            <div>
-                                <Button
-                                    size="large"
-                                    // style={{ float: 'right' }}
-                                    variant="contained"
-                                    color="default"
-                                    onClick={handlCloseChangePassModal}>
-                                    <b>Cancel</b>
-                                </Button>
-                                <Button
-                                    size="large"
-                                    style={{ marginLeft: 10 }}
-                                    variant="contained"
-                                    color="default"
-                                    startIcon={<Save />}
-                                    onClick={handleChangePassword}>
-                                    <b>Submit</b>
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </Fade>
-            </Modal>
+                <label style={{ fontSize: 14, fontWeight: 500 }}>Role</label>
+                <Select
+                    defaultValue={role}
+                    options={RoleOption()}
+                    onChange={e => setRole(e)}
+                    placeholder="Select Role"
+                    theme={theme => ({
+                        ...theme,
+                        colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
+                    })}
+                    styles={customSelectStyle}
+                />
+
+                <label style={{ fontSize: 14, fontWeight: 500 }}>Username</label>
+                <TextField fullWidth variant="outlined" size="small" value={userName} onChange={e => setUserName(e.target.value)} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+                <Button
+                    variant="outlined"
+                    onClick={handlCloseEditModal}
+                    style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Save />}
+                    onClick={handleEditUser}
+                    disabled={loader}
+                    style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
+                >
+                    Submit
+                </Button>
+            </div>
+        </div>
+    </Fade>
+</Modal>
+
+{/* Delete User Modal */}
+<Modal
+    open={deletePopup}
+    onClose={handleCloseDeleteModal}
+    closeAfterTransition
+    BackdropComponent={Backdrop}
+    BackdropProps={{ timeout: 500 }}
+>
+    <Fade in={deletePopup}>
+        <div
+            style={{
+                background: '#ffffff',
+                borderRadius: 20,
+                padding: '30px 25px',
+                width: '90%',
+                maxWidth: 400,
+                margin: 'auto',
+                outline: 'none',
+                boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 20,
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                marginTop: 20
+            }}
+        >
+            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Warning</h2>
+            <Divider style={{ marginBottom: 10 }} />
+
+            <p>Are you sure you want to delete this User?</p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+                <Button
+                    variant="outlined"
+                    onClick={handleCloseDeleteModal}
+                    style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant="contained"
+                    color="secondary"
+                    startIcon={<Delete />}
+                    onClick={handleDeleteUser}
+                    disabled={loader}
+                    style={{ flex: '1 1 45%', borderRadius: 10, background: '#f44336', color: '#fff', textTransform: 'none' }}
+                >
+                    Delete
+                </Button>
+            </div>
+        </div>
+    </Fade>
+</Modal>
+
+{/* Change Password Modal */}
+<Modal
+    open={changePassModal}
+    onClose={handlCloseChangePassModal}
+    closeAfterTransition
+    BackdropComponent={Backdrop}
+    BackdropProps={{ timeout: 500 }}
+>
+    <Fade in={changePassModal}>
+        <div
+            style={{
+                background: '#ffffff',
+                borderRadius: 20,
+                padding: '30px 25px',
+                width: '90%',
+                maxWidth: 500,
+                margin: 'auto',
+                outline: 'none',
+                boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 20,
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                marginTop: 20
+            }}
+        >
+            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Change Password</h2>
+            <Divider style={{ marginBottom: 10 }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <label style={{ fontSize: 14, fontWeight: 500 }}>Password</label>
+                <TextField fullWidth type="password" variant="outlined" size="small" value={password} onChange={e => setPassword(e.target.value)} />
+
+                <label style={{ fontSize: 14, fontWeight: 500 }}>Confirm Password</label>
+                <TextField fullWidth type="password" variant="outlined" size="small" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+                <Button
+                    variant="outlined"
+                    onClick={handlCloseChangePassModal}
+                    style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Save />}
+                    onClick={handleChangePassword}
+                    disabled={loader}
+                    style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
+                >
+                    Submit
+                </Button>
+            </div>
+        </div>
+    </Fade>
+</Modal>
         </div >
     );
 }
