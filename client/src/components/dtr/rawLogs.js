@@ -763,6 +763,7 @@ const RawLogs = () => {
 
             <DropzoneDialog
                 open={addModal}
+                dialogTitle={"Upload file from NIDEKA NU-2302 Biometrics device."}
                 // onSave={this.handleSave.bind(this)}
                 // onSave={e => handleImportLogs(e)}
                 onSave={e => handleUploadXlsFile(e)}
