@@ -289,6 +289,7 @@ const Department = () => {
     }, []);
 
     useEffect(() => {
+        setLoader(true);
         var data = {
             selectedDepartment: !selectedDepartment ? [] : selectedDepartment,
             page: page
@@ -319,7 +320,7 @@ const Department = () => {
             .finally(function () {
                 // always executed
             });
-    }, [selectedDepartment, loader]);
+    }, [selectedDepartment]);
 
     const departmentList = departmentData
         ? departmentData.map((x) => ({
@@ -1023,6 +1024,8 @@ const Department = () => {
                                     variant="contained"
                                     color="default"
                                     startIcon={<Save />}
+                                    disabled={loader}
+                                    loading={loader}
                                     onClick={handleAddDepartment}>
                                     <b>Submit</b>
                                 </Button>
@@ -1283,6 +1286,8 @@ const Department = () => {
                                     variant="contained"
                                     color="default"
                                     startIcon={<Save />}
+                                    disabled={loader}
+                                    loading={loader}
                                     onClick={handleEditDepartment}>
                                     <b>Submit</b>
                                 </Button>
@@ -1333,6 +1338,8 @@ const Department = () => {
                                 variant="contained"
                                 color='secondary'
                                 startIcon={<Delete />}
+                                disabled={loader}
+                                loading={loader}
                                 onClick={handleDeleteItem}>
                                 <b>Delete</b>
                             </Button>
