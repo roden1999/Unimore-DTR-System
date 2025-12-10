@@ -28,7 +28,7 @@
     "react-scripts": "^5.0.1",
     "react-select": "^4.3.0",
     "react-spring": "^9.1.2",
-    "react-swipeable-views": "^0.13.9",
+    "react-swipeable-views": "^0.14.1",
     "react-toastify": "^7.0.3",
     "web-vitals": "^1.0.1",
     "xlsx": "^0.18.5"
