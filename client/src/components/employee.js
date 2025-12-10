@@ -10,7 +10,6 @@ import CardActionArea from '@material-ui/core/CardActionArea';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import TablePagination from '@material-ui/core/TablePagination';
 import Input from '@material-ui/core/Input';
 import Modal from '@material-ui/core/Modal';
 import Backdrop from '@material-ui/core/Backdrop';
@@ -20,6 +19,17 @@ import Select from 'react-select';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { TextField } from '@material-ui/core';
+import Switch from '@material-ui/core/Switch';
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TablePagination,
+  TableContainer
+} from '@material-ui/core';
+import { FormControlLabel } from '@material-ui/core';
 
 const axios = require("axios");
 const moment = require("moment");
@@ -165,6 +175,7 @@ const customSelectStyle = {
 const Employee = () => {
   const classes = useStyles();
   const [loader, setLoader] = useState(true);
+  const [viewMode, setViewMode] = useState('table');
   const [employeeData, setEmployeeData] = useState(null);
   const [departmentOptions, setDepartmentOptions] = useState(null);
   const [employeeOptions, setEmployeeOptions] = useState(null);
@@ -195,6 +206,7 @@ const Employee = () => {
   }, []);
 
   useEffect(() => {
+    setLoader(true);
     var data = {
       selectedEmployee: !selectedEmployee ? [] : selectedEmployee,
       selectedDepartment: !selectedDepartment ? [] : selectedDepartment,
@@ -226,7 +238,7 @@ const Employee = () => {
       .finally(function () {
         // always executed
       });
-  }, [page, selectedEmployee, selectedDepartment, loader]);
+  }, [page, selectedEmployee, selectedDepartment]);
 
   const employeeList = employeeData
     ? employeeData.map((x) => ({
@@ -611,463 +623,465 @@ const Employee = () => {
     setPage(0);
   }
 
+  const toggleView = () => {
+    setViewMode(prev => (prev === 'card' ? 'table' : 'card'));
+  };
+
   return (
-    <div className={classes.root}>
-
+    <div style={{ padding: 20 }}>
       <ToastContainer />
-      <Button
-        size="large"
-        style={{ float: 'left' }}
-        variant="contained"
-        color="default"
-        startIcon={<Add />}
-        onClick={() => setAddModal(true)}>Add Employee</Button>
 
-      <div style={{
-        float: 'right', width: '30%', zIndex: 100,
-      }}>
-        <Select
-          defaultValue={selectedEmployee}
-          options={EmployeeOption(employeeOptionsList)}
-          onChange={e => setSelectedEmployee(e)}
-          placeholder='Search...'
-          isClearable
-          isMulti
-          theme={(theme) => ({
-            ...theme,
-            // borderRadius: 0,
-            colors: {
-              ...theme.colors,
-              text: 'black',
-              primary25: '#66c0f4',
-              primary: '#B9B9B9',
-            },
-          })}
-          styles={customMultiSelectStyle}
-        />
+      {/* Header Controls */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 20 }}>
+        <Button
+          size="large"
+          variant="contained"
+          color="default"
+          startIcon={<Add />}
+          onClick={() => setAddModal(true)}
+        >
+          Add Employee
+        </Button>
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <FormControlLabel
+            control={<Switch checked={viewMode === 'table'} onChange={toggleView} />}
+            label={viewMode === 'table' ? 'Table View' : 'Card View'}
+          />
+
+          <Select
+            defaultValue={selectedEmployee}
+            options={EmployeeOption(employeeOptionsList)}
+            onChange={e => setSelectedEmployee(e)}
+            placeholder="Search..."
+            isClearable
+            isMulti
+            styles={{ container: base => ({ ...base, minWidth: 200 }) }}
+          />
+
+          <Select
+            defaultValue={selectedDepartment}
+            options={DepartmentSearchOption(departmentOptionsList)}
+            onChange={e => handleFilterDepartment(e)}
+            placeholder="Department"
+            isClearable
+            isMulti
+            styles={{ container: base => ({ ...base, minWidth: 150 }) }}
+          />
+        </div>
       </div>
 
-      <div style={{
-        float: 'right', width: '15%', zIndex: 100, marginRight: 10
-      }}>
-        <Select
-          defaultValue={selectedDepartment}
-          options={DepartmentSearchOption(departmentOptionsList)}
-          onChange={e => handleFilterDepartment(e)}
-          placeholder='Department'
-          isClearable
-          isMulti
-          theme={(theme) => ({
-            ...theme,
-            // borderRadius: 0,
-            colors: {
-              ...theme.colors,
-              text: 'black',
-              primary25: '#66c0f4',
-              primary: '#B9B9B9',
-            },
-          })}
-          styles={customMultiSelectStyle}
-        />
-      </div>
-
-      <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '75vh', maxHeight: '75vh', overflowY: 'scroll' }}>
-        <Grid container spacing={3}>
-          {employeeList.length > 0 && loader === false && employeeList.map(x =>
-            <Grid item xs={3}>
-              <Card>
-                <CardActionArea>
-                  <CardContent>
-                    <Typography gutterBottom variant="h5" component="h2">
-                      {x.lastName + " " + x.firstName + " " + x.middleName + " " + x.suffix}
-                    </Typography>
-                    <Typography gutterBottom variant="p" component="h3">
-                      Employee No: {x.employeeNo}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary" component="p">
-                      Department: {x.department} <br />
-                      Gender: {x.gender} <br />
-                      Contact No: {x.contactNo} <br />
-                      Address: {x.address}
-                    </Typography>
-                  </CardContent>
-                </CardActionArea>
-                <CardActions>
-                  <Button size="small" color="primary" onClick={() => handleOpenEditModal(x)}>
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    color="primary"
-                    disabled={role === "Administrator" || role === "HR" ? false : true}
-                    onClick={() => handleOpenDeletePopup(x.id)}
-                  >
-                    Delete
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
-        {loader === true &&
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 200 }}>
+      {/* Outer container */}
+      <div
+        style={{
+          backgroundColor: '#F4F4F4',
+          padding: 10,
+          height: '75vh',         // fix the height for scrollable content
+          overflowY: 'auto',      // vertical scroll
+        }}
+      >
+        {loader ? (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 50 }}>
             <CircularProgress />
           </div>
-        }
-        {employeeList.length === 0 && loader !== true &&
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 200 }}>
-            <h1 style={{ color: '#C4C4C4C4' }}>No Data Found</h1>
+        ) : employeeList.length === 0 ? (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 50 }}>
+            <h1 style={{ color: '#C4C4C4' }}>No Data Found</h1>
           </div>
-        }
+        ) : viewMode === 'card' ? (
+          <Grid container spacing={3}>
+            {employeeList.map((x, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                <Card>
+                  <CardActionArea>
+                    <CardContent>
+                      <Typography gutterBottom variant="h5">
+                        {`${x.lastName} ${x.firstName} ${x.middleName} ${x.suffix}`}
+                      </Typography>
+                      <Typography gutterBottom variant="body2">
+                        Employee No: {x.employeeNo}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Department: {x.department} <br />
+                        Gender: {x.gender} <br />
+                        Contact No: {x.contactNo} <br />
+                        Address: {x.address}
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                  <CardActions>
+                    <Button size="small" color="primary" onClick={() => handleOpenEditModal(x)}>Edit</Button>
+                    <Button
+                      size="small"
+                      color="primary"
+                      disabled={!(role === "Administrator" || role === "HR")}
+                      onClick={() => handleOpenDeletePopup(x.id)}
+                    >
+                      Delete
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table sx={{ borderCollapse: 'collapse', minWidth: 800 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      fontWeight: 'bold',
+                      border: '1px solid #ccc',
+                      position: 'sticky',
+                      left: 0,
+                      backgroundColor: '#fff',
+                      zIndex: 3,
+                    }}
+                  >
+                    Name
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Employee No</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Department</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Gender</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Contact</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Address</TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 'bold',
+                      border: '1px solid #ccc',
+                      position: 'sticky',
+                      right: 0,
+                      backgroundColor: '#fff',
+                      zIndex: 3,
+                    }}
+                  >
+                    Actions
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {employeeList.map((x, index) => (
+                  <TableRow key={index}>
+                    <TableCell
+                      sx={{
+                        border: '1px solid #ccc',
+                        position: 'sticky',
+                        left: 0,
+                        backgroundColor: '#fff',
+                        zIndex: 1,
+                      }}
+                    >
+                      {`${x.lastName} ${x.firstName} ${x.middleName} ${x.suffix}`}
+                    </TableCell>
+                    <TableCell sx={{ border: '1px solid #ccc' }}>{x.employeeNo}</TableCell>
+                    <TableCell sx={{ border: '1px solid #ccc' }}>{x.department}</TableCell>
+                    <TableCell sx={{ border: '1px solid #ccc' }}>{x.gender}</TableCell>
+                    <TableCell sx={{ border: '1px solid #ccc' }}>{x.contactNo}</TableCell>
+                    <TableCell sx={{ border: '1px solid #ccc' }}>{x.address}</TableCell>
+                    <TableCell
+                      sx={{
+                        border: '1px solid #ccc',
+                        position: 'sticky',
+                        right: 0,
+                        backgroundColor: '#fff',
+                        zIndex: 1,
+                      }}
+                    >
+                      <Button size="small" color="primary" onClick={() => handleOpenEditModal(x)}>Edit</Button>
+                      <Button
+                        size="small"
+                        color="primary"
+                        disabled={!(role === "Administrator" || role === "HR")}
+                        onClick={() => handleOpenDeletePopup(x.id)}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </div>
 
-      {Object.keys(selectedEmployee).length === 0 &&
-        <TablePagination
-          // rowsPerPageOptions={[10, 25, 100]}
-          labelRowsPerPage=''
-          rowsPerPageOptions={[]}
-          component="div"
-          count={totalEmp}
-          rowsPerPage={20}
-          page={page}
-          onChangePage={handleChangePage}
-        // onChangeRowsPerPage={handleChangeRowsPerPage}
-        />
-      }
+      {/* Pagination */}
+      <div style={{ marginTop: 10 }}>
+        {viewMode === 'table' || Object.keys(selectedEmployee).length === 0 ? (
+          <TablePagination
+            rowsPerPageOptions={[]}
+            component="div"
+            count={totalEmp}
+            rowsPerPage={20}
+            page={page}
+            onPageChange={handleChangePage} // updated prop for MUI v5
+          />
+        ) : null}
+      </div>
 
+      {/* Add Employee Modal */}
       <Modal
-        aria-labelledby="spring-modal-title"
-        aria-describedby="spring-modal-description"
-        className={classes.modal}
         open={addModal}
         onClose={handleCloseAddModal}
         closeAfterTransition
         BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
+        BackdropProps={{ timeout: 500 }}
       >
         <Fade in={addModal}>
-          <div className={classes.modalPaper}>
-            <div>
-              <h1>Add Employee</h1>
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: 20,
+              padding: '30px 25px',
+              width: '90%',
+              maxWidth: 500,
+              margin: 'auto',
+              outline: 'none',
+              boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              marginTop: 20
+            }}
+          >
+            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Add Employee</h2>
+            <Divider style={{ marginBottom: 10 }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Employee No</label>
+              <TextField fullWidth variant="outlined" size="small" value={employeeNo} onChange={e => setEmployeeNo(e.target.value)} placeholder="Employee No" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>First Name</label>
+              <TextField fullWidth variant="outlined" size="small" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Middle Name / Middle Initial</label>
+              <TextField fullWidth variant="outlined" size="small" value={middleName} onChange={e => setMiddleName(e.target.value)} placeholder="Middle Name" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Last Name</label>
+              <TextField fullWidth variant="outlined" size="small" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Suffix</label>
+              <TextField fullWidth variant="outlined" size="small" value={suffix} onChange={e => setSuffix(e.target.value)} placeholder="Suffix" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Department</label>
+              <Select
+                defaultValue={department}
+                options={DepartmentOption(departmentOptionsList)}
+                onChange={e => setDepartment(e)}
+                placeholder='Department...'
+                theme={theme => ({
+                  ...theme,
+                  colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
+                })}
+                styles={customSelectStyle}
+              />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Gender</label>
+              <Select
+                defaultValue={gender}
+                options={GenderOption()}
+                onChange={e => setGender(e)}
+                placeholder='Gender...'
+                theme={theme => ({
+                  ...theme,
+                  colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
+                })}
+                styles={customSelectStyle}
+              />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Contact No</label>
+              <TextField type="number" fullWidth variant="outlined" size="small" value={contactNo} onChange={e => setContactNo(e.target.value)} placeholder="Contact No" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Address</label>
+              <TextField fullWidth variant="outlined" size="small" value={address} onChange={e => setAddress(e.target.value)} placeholder="Address" />
             </div>
-            <Divider />
-            <br />
-            <form noValidate autoComplete="off">
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Employee No</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Employee No" value={employeeNo} onChange={e => setEmployeeNo(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
 
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>First Name</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Middle Name / Middle Initial</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Middle Name" value={middleName} onChange={e => setMiddleName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Last Name</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Suffix</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Suffix" value={suffix} onChange={e => setSuffix(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><b>Department</b></label>
-                <Select
-                  defaultValue={department}
-                  options={DepartmentOption(departmentOptionsList)}
-                  onChange={e => setDepartment(e)}
-                  placeholder='Department...'
-                  // isClearable
-                  // isMulti
-                  theme={(theme) => ({
-                    ...theme,
-                    // borderRadius: 0,
-                    colors: {
-                      ...theme.colors,
-                      text: 'black',
-                      primary25: '#66c0f4',
-                      primary: '#B9B9B9',
-                    },
-                  })}
-                  styles={customSelectStyle}
-                />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><b>Gender</b></label>
-                <Select
-                  defaultValue={gender}
-                  options={GenderOption()}
-                  onChange={e => setGender(e)}
-                  placeholder='Gender...'
-                  // isClearable
-                  // isMulti
-                  theme={(theme) => ({
-                    ...theme,
-                    // borderRadius: 0,
-                    colors: {
-                      ...theme.colors,
-                      text: 'black',
-                      primary25: '#66c0f4',
-                      primary: '#B9B9B9',
-                    },
-                  })}
-                  styles={customSelectStyle}
-                />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Contact No</strong></label><br />
-                <TextField type="number" variant='outlined' size='small' fullWidth placeholder="Contact No" value={contactNo} onChange={e => setContactNo(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Address</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Address" value={address} onChange={e => setAddress(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <Button
-                  size="large"
-                  // style={{ float: 'right' }}
-                  variant="contained"
-                  color="default"
-                  onClick={handleCloseAddModal}>
-                  <b>Cancel</b>
-                </Button>
-                <Button
-                  size="large"
-                  style={{ marginLeft: 10 }}
-                  variant="contained"
-                  color="default"
-                  startIcon={<Save />}
-                  onClick={handleAddEmployee}>
-                  <b>Submit</b>
-                </Button>
-              </div>
-            </form>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                onClick={handleCloseAddModal}
+                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Save />}
+                onClick={handleAddEmployee}
+                disabled={loader}
+                loading={loader}
+                style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
+              >
+                Submit
+              </Button>
+            </div>
           </div>
         </Fade>
       </Modal>
 
-
+      {/* Edit Employee Modal */}
       <Modal
-        aria-labelledby="spring-modal-title"
-        aria-describedby="spring-modal-description"
-        className={classes.modal}
         open={editModal}
         onClose={handleCloseEditModal}
         closeAfterTransition
         BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
+        BackdropProps={{ timeout: 500 }}
       >
         <Fade in={editModal}>
-          <div className={classes.modalPaper}>
-            <div>
-              <h1>Edit Employee</h1>
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: 20,
+              padding: '30px 25px',
+              width: '90%',
+              maxWidth: 500,
+              margin: 'auto',
+              outline: 'none',
+              boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              marginTop: 20
+            }}
+          >
+            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Edit Employee</h2>
+            <Divider style={{ marginBottom: 10 }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Employee No</label>
+              <TextField fullWidth variant="outlined" size="small" value={employeeNo} onChange={e => setEmployeeNo(e.target.value)} placeholder="Employee No" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>First Name</label>
+              <TextField fullWidth variant="outlined" size="small" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Middle Name</label>
+              <TextField fullWidth variant="outlined" size="small" value={middleName} onChange={e => setMiddleName(e.target.value)} placeholder="Middle Name" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Last Name</label>
+              <TextField fullWidth variant="outlined" size="small" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Suffix</label>
+              <TextField fullWidth variant="outlined" size="small" value={suffix} onChange={e => setSuffix(e.target.value)} placeholder="Suffix" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Department</label>
+              <Select
+                defaultValue={department}
+                options={DepartmentOption(departmentOptionsList)}
+                onChange={e => setDepartment(e)}
+                placeholder='Department...'
+                theme={theme => ({
+                  ...theme,
+                  colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
+                })}
+                styles={customSelectStyle}
+              />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Gender</label>
+              <Select
+                defaultValue={gender}
+                options={GenderOption()}
+                onChange={e => setGender(e)}
+                placeholder='Gender...'
+                theme={theme => ({
+                  ...theme,
+                  colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
+                })}
+                styles={customSelectStyle}
+              />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Contact No</label>
+              <TextField type="number" fullWidth variant="outlined" size="small" value={contactNo} onChange={e => setContactNo(e.target.value)} placeholder="Contact No" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Address</label>
+              <TextField fullWidth variant="outlined" size="small" value={address} onChange={e => setAddress(e.target.value)} placeholder="Address" />
             </div>
-            <Divider />
-            <br />
-            <form noValidate autoComplete="off">
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Employee No</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Employee No" value={employeeNo} onChange={e => setEmployeeNo(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
 
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>First Name</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Middle Name</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Middle Name" value={middleName} onChange={e => setMiddleName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Last Name</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Last Name" value={lastName} onChange={e => setLastName(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Suffix</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Suffix" value={suffix} onChange={e => setSuffix(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><b>Department</b></label>
-                <Select
-                  defaultValue={department}
-                  options={DepartmentOption(departmentOptionsList)}
-                  onChange={e => setDepartment(e)}
-                  placeholder='Department...'
-                  // isClearable
-                  // isMulti
-                  theme={(theme) => ({
-                    ...theme,
-                    // borderRadius: 0,
-                    colors: {
-                      ...theme.colors,
-                      text: 'black',
-                      primary25: '#66c0f4',
-                      primary: '#B9B9B9',
-                    },
-                  })}
-                  styles={customSelectStyle}
-                />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><b>Gender</b></label>
-                <Select
-                  defaultValue={gender}
-                  options={GenderOption()}
-                  onChange={e => setGender(e)}
-                  placeholder='Gender...'
-                  // isClearable
-                  // isMulti
-                  theme={(theme) => ({
-                    ...theme,
-                    // borderRadius: 0,
-                    colors: {
-                      ...theme.colors,
-                      text: 'black',
-                      primary25: '#66c0f4',
-                      primary: '#B9B9B9',
-                    },
-                  })}
-                  styles={customSelectStyle}
-                />
-              </div>
-
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Contact No</strong></label><br />
-                <TextField type="number" variant='outlined' size='small' fullWidth placeholder="Contact No" value={contactNo} onChange={e => setContactNo(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-              <br />
-
-              <div>
-                <label style={{ fontSize: '17px' }}><strong>Address</strong></label><br />
-                <TextField variant='outlined' size='small' fullWidth placeholder="Address" value={address} onChange={e => setAddress(e.target.value)} inputProps={{ 'aria-label': 'description' }} />
-              </div>
-
-              <br />
-
-              <div>
-                <Button
-                  size="large"
-                  // style={{ float: 'right' }}
-                  variant="contained"
-                  color="default"
-                  onClick={handleCloseEditModal}>
-                  <b>Cancel</b>
-                </Button>
-                <Button
-                  size="large"
-                  style={{ marginLeft: 10 }}
-                  variant="contained"
-                  color="default"
-                  startIcon={<Save />}
-                  onClick={handleEditEmployee}>
-                  <b>Submit</b>
-                </Button>
-              </div>
-            </form>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                onClick={handleCloseEditModal}
+                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<Save />}
+                onClick={handleEditEmployee}
+                disabled={loader}
+                loading={loader}
+                style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
+              >
+                Submit
+              </Button>
+            </div>
           </div>
         </Fade>
       </Modal>
 
+      {/* Delete Employee Modal */}
       <Modal
-        aria-labelledby="spring-modal-title"
-        aria-describedby="spring-modal-description"
-        className={classes.modal}
         open={deletePopup}
         onClose={handleCloseDeleteModal}
         closeAfterTransition
         BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
+        BackdropProps={{ timeout: 500 }}
       >
         <Fade in={deletePopup}>
-          <div className={classes.modalPaper}>
-            <div>
-              <h1>Warning</h1>
-            </div>
-            <Divider />
-            <br />
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: 20,
+              padding: '30px 25px',
+              width: '90%',
+              maxWidth: 400,
+              margin: 'auto',
+              outline: 'none',
+              boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 20,
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              marginTop: 20
+            }}
+          >
+            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Warning</h2>
+            <Divider style={{ marginBottom: 10 }} />
 
             <p>Are you sure you want to delete this employee?</p>
 
-            <br />
-            <Divider />
-            <br />
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
               <Button
-                size="large"
-                // style={{ float: 'right' }}
-                variant="contained"
-                color="default"
-                onClick={handleCloseDeleteModal}>
-                <b>Cancel</b>
+                variant="outlined"
+                onClick={handleCloseDeleteModal}
+                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+              >
+                Cancel
               </Button>
               <Button
-                size="large"
-                style={{ marginLeft: 10 }}
                 variant="contained"
-                color='secondary'
+                color="secondary"
                 startIcon={<Delete />}
-                onClick={handleDeleteItem}>
-                <b>Delete</b>
+                onClick={handleDeleteItem}
+                disabled={loader}
+                loading={loader}
+                style={{ flex: '1 1 45%', borderRadius: 10, background: '#f44336', color: '#fff', textTransform: 'none' }}
+              >
+                Delete
               </Button>
             </div>
           </div>
         </Fade>
       </Modal>
+
     </div>
   );
 }
