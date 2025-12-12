@@ -204,13 +204,13 @@ const StyledTableRow = withStyles((theme) => ({
 
 const DetailedLogs = () => {
     const classes = useStyles();
-    var dlSemp = JSON.parse(sessionStorage.getItem("dlSemp"));
-    var dlSremarks = JSON.parse(sessionStorage.getItem("dlSremarks"));
-    var dlSdept = JSON.parse(sessionStorage.getItem("dlSdept"));
+    var dlSremarks = JSON.parse(sessionStorage.getItem("dlSremarks")) || { remarks: [] };
+    var dlSemp = JSON.parse(sessionStorage.getItem("dlSemp")) || { emp: [] };
+    var dlSdept = JSON.parse(sessionStorage.getItem("dlSdept")) || { dept: [] };
     var dlSfromDate = sessionStorage.getItem("dlSfromDate");
     var dlStoDate = sessionStorage.getItem("dlStoDate");
     const [loader, setLoader] = useState(true);
-    const [logData, setLogData] = useState(null);
+    const [logData, setLogData] = useState([]);
     const [employeeOptions, setEmployeeOptions] = useState(null);
     const [departmentOptions, setDepartmentOptions] = useState(null);
     const [addModal, setAddModal] = useState(false);
@@ -559,19 +559,14 @@ const DetailedLogs = () => {
 
         e.timeLogs.forEach(y => {
             var color = "";
-            if (y.remarks === "Special Holiday") color = "#7BFF66";
-
-            if (y.remarks === "Regular Holiday") color = "#7BFF66";
-
-            if (y.remarks === "Special Holiday w/o Pay") color = "#FF0C0C";
-
-            if (y.remarks === "Regular Holiday w/o Pay") color = "#FF0C0C";
-
-            if (y.remarks === "Working Regular Holiday" || y.remarks === "Working Special Holiday") color = "#20E700";
-
-            if (y.remarks === "Absent") color = "#FF0C0C";
-
-            if (y.remarks === "Working Regular Holiday Rest Day" || y.remarks === "Working Special Holiday Rest Day") color = "#2CFF72";
+            const remarks = y.remarks || ""; // default to empty string
+            if (remarks === "Special Holiday") color = "#7BFF66";
+            if (remarks === "Regular Holiday") color = "#7BFF66";
+            if (remarks === "Special Holiday w/o Pay") color = "#FF0C0C";
+            if (remarks === "Regular Holiday w/o Pay") color = "#FF0C0C";
+            if (remarks === "Working Regular Holiday" || remarks === "Working Special Holiday") color = "#20E700";
+            if (remarks === "Absent") color = "#FF0C0C";
+            if (remarks === "Working Regular Holiday Rest Day" || remarks === "Working Special Holiday Rest Day") color = "#2CFF72";
 
             document.content.push({
                 // layout: 'lightHorizontalLines',
@@ -709,6 +704,38 @@ const DetailedLogs = () => {
         // setPage(0);
     }
 
+    const renderRemarksChip = (remarks) => {
+        const map = {
+            "Absent": { color: "secondary" },
+            "Undertime": { color: "default", bg: "#FFE633" },
+            "Rest Day": { color: "default", bg: "#33FEE5" },
+            "Working Rest Day": { color: "default", bg: "#00A2FF" },
+            "Regular Holiday": { color: "default", bg: "#7BFF66" },
+            "Special Holiday": { color: "default", bg: "#7BFF66" },
+            "Regular Holiday w/o Pay": { color: "default", bg: "#FF0C0C" },
+            "Special Holiday w/o Pay": { color: "default", bg: "#FF0C0C" },
+            "Overtime": { color: "primary" },
+            "Late": { color: "primary", bg: "#FFA908" },
+            "Offset": { color: "default", bg: "#233A46" },
+            "Manual Log": { color: "default", bg: "#233A46" },
+            "SL w/ Pay": { color: "default", bg: "#FF00F3" },
+            "SL w/o Pay": { color: "default", bg: "#FF00F3" },
+            "VL w/ Pay": { color: "default", bg: "#FF00F3" },
+            "VL w/o Pay": { color: "default", bg: "#FF00F3" },
+        };
+
+        if (!map[remarks]) return null;
+
+        return (
+            <Chip
+                label={remarks}
+                color={map[remarks].color}
+                style={map[remarks].bg ? { backgroundColor: map[remarks].bg } : {}}
+            />
+        );
+    };
+
+
     return (
         <div className={classes.root}>
 
@@ -826,295 +853,139 @@ const DetailedLogs = () => {
 
             <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '68vh', maxHeight: '68vh', overflowY: 'scroll' }}>
                 <Grid container spacing={3}>
-                    {logList.length !== 0 && loader !== true && logList.map(x =>
-                        <Grid item xs={12}>
-                            <Card>
-                                <CardContent>
-                                    <Button
-                                        size="small"
-                                        style={{ float: 'right' }}
-                                        variant="contained"
-                                        color="default"
-                                        startIcon={<Print />}
-                                        onClick={() => exportToPDF(x)}>Print Logs</Button>
+                    {Array.isArray(logList) && logList.length > 0 && !loader
+                        ? logList.map((x, idx) => (
+                            <Grid item xs={12} key={idx}>
+                                <Card>
+                                    <CardContent>
+                                        <Button
+                                            size="small"
+                                            style={{ float: "right" }}
+                                            variant="contained"
+                                            color="default"
+                                            startIcon={<Print />}
+                                            onClick={() => exportToPDF(x)}
+                                        >
+                                            Print Logs
+                                        </Button>
 
-                                    <Typography style={{ fontSize: 14 }} color="textSecondary" gutterBottom>
-                                        {x.employeeNo}
-                                    </Typography>
-                                    <Typography variant="h5" component="h2">
-                                        {x.employeeName}
-                                    </Typography>
-                                    <Typography color="textSecondary">
-                                        {x.department}
-                                    </Typography>
+                                        <Typography style={{ fontSize: 14 }} color="textSecondary" gutterBottom>
+                                            {x?.employeeNo || ""}
+                                        </Typography>
+                                        <Typography variant="h5" component="h2">
+                                            {x?.employeeName || ""}
+                                        </Typography>
+                                        <Typography color="textSecondary">{x?.department || ""}</Typography>
 
-                                    <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 10, height: '100%', minHeight: '40vh', maxHeight: '40vh', overFlowY: 'auto' }}>
-                                        <TableContainer className={classes.tbcontainer}>
-                                            <Table stickyHeader aria-label="sticky table">
-                                                <TableHead>
-                                                    <TableRow>
-                                                        <StyledTableCell>Day</StyledTableCell>
-                                                        <StyledTableCell>Date</StyledTableCell>
-                                                        <StyledTableCell>Time Start / End</StyledTableCell>
-                                                        <StyledTableCell>Time In</StyledTableCell>
-                                                        <StyledTableCell>Break Out</StyledTableCell>
-                                                        <StyledTableCell>Break In</StyledTableCell>
-                                                        <StyledTableCell>Time Out</StyledTableCell>
-                                                        <StyledTableCell>Hours Work</StyledTableCell>
-                                                        <StyledTableCell>Late</StyledTableCell>
-                                                        <StyledTableCell>UT</StyledTableCell>
-                                                        <StyledTableCell>OT</StyledTableCell>
-                                                        <StyledTableCell>Remarks</StyledTableCell>
-                                                        <StyledTableCell>Reason</StyledTableCell>
-                                                    </TableRow>
-                                                </TableHead>
-                                                {x.timeLogs.map(y =>
+                                        <div
+                                            style={{
+                                                padding: 10,
+                                                backgroundColor: "#F4F4F4",
+                                                marginTop: 10,
+                                                minHeight: "40vh",
+                                                maxHeight: "40vh",
+                                                overflowY: "auto",
+                                            }}
+                                        >
+                                            <TableContainer className={classes.tbcontainer}>
+                                                <Table stickyHeader aria-label="sticky table">
+                                                    <TableHead>
+                                                        <TableRow>
+                                                            {[
+                                                                "Day",
+                                                                "Date",
+                                                                "Time Start / End",
+                                                                "Time In",
+                                                                "Break Out",
+                                                                "Break In",
+                                                                "Time Out",
+                                                                "Hours Work",
+                                                                "Late",
+                                                                "UT",
+                                                                "OT",
+                                                                "Remarks",
+                                                                "Reason",
+                                                            ].map((header) => (
+                                                                <StyledTableCell key={header}>{header}</StyledTableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    </TableHead>
+
                                                     <TableBody>
-                                                        <StyledTableRow hover role="checkbox" tabIndex={-1} key={y.id}>
-                                                            <StyledTableCell style={{ color: y.day === "Sunday" ? "red" : "" }}>
-                                                                {y.day}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {moment(y.dateTime).format("MMM DD, yyyy")}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.timeStartEnd}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.timeIn !== "Invalid date" ? y.timeIn : ""}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.breakOut !== "Invalid date" ? y.breakOut : ""}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.breakIn !== "Invalid date" ? y.breakIn : ""}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.timeOut !== "Invalid date" ? y.timeOut : ""}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.hoursWork}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.late}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.UT}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.OT}
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.remarks === "Absent" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="secondary"
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "OT For Approval" &&
-                                                                    ""
-                                                                }
-
-                                                                {y.remarks === "" &&
-                                                                    ""
-                                                                }
-
-                                                                {y.remarks === "Undertime" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#FFE633' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Rest Day" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#33FEE5' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Working Rest Day" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#00A2FF' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Regular Holiday" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#7BFF66' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Special Holiday" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#7BFF66' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Regular Holiday w/o Pay" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#FF0C0C' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Special Holiday w/o Pay" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#FF0C0C' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Working Regular Holiday" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#20E700' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Working Special Holiday" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#20E700' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Working Special Holiday Rest Day" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#2CFF72' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Working Regular Holiday Rest Day" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#2CFF72' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Overtime" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="primary"
-                                                                    // style={{ backgroundColor:'#20E700' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Late" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="primary"
-                                                                        style={{ backgroundColor: '#FFA908' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Offset" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#233A46' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "Manual Log" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#233A46' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "SL w/ Pay" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#FF00F3' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "SL w/o Pay" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#FF00F3' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "VL w/ Pay" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#FF00F3' }}
-                                                                    />
-                                                                }
-
-                                                                {y.remarks === "VL w/o Pay" &&
-                                                                    <Chip
-                                                                        label={y.remarks}
-                                                                        color="default"
-                                                                        style={{ backgroundColor: '#FF00F3' }}
-                                                                    />
-                                                                }
-                                                            </StyledTableCell>
-                                                            <StyledTableCell>
-                                                                {y.reason}
-                                                            </StyledTableCell>
-                                                        </StyledTableRow>
+                                                        {Array.isArray(x?.timeLogs) &&
+                                                            x.timeLogs.map((y, i) => (
+                                                                <StyledTableRow hover role="checkbox" tabIndex={-1} key={i}>
+                                                                    <StyledTableCell style={{ color: y?.day === "Sunday" ? "red" : "" }}>
+                                                                        {y?.day || ""}
+                                                                    </StyledTableCell>
+                                                                    <StyledTableCell>
+                                                                        {y?.dateTime ? moment(y.dateTime).format("MMM DD, yyyy") : ""}
+                                                                    </StyledTableCell>
+                                                                    <StyledTableCell>{y?.timeStartEnd || ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.timeIn !== "Invalid date" ? y?.timeIn : ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.breakOut !== "Invalid date" ? y?.breakOut : ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.breakIn !== "Invalid date" ? y?.breakIn : ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.timeOut !== "Invalid date" ? y?.timeOut : ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.hoursWork || ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.late || ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.UT || ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.OT || ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.remarks ? renderRemarksChip(y.remarks) : ""}</StyledTableCell>
+                                                                    <StyledTableCell>{y?.reason || ""}</StyledTableCell>
+                                                                </StyledTableRow>
+                                                            ))}
                                                     </TableBody>
-                                                )}
-                                            </Table>
-                                        </TableContainer>
-                                    </div>
-                                </CardContent>
-                                <CardActions>
-                                    <Grid container spacing={3}>
-                                        <Grid item xs={2.8}>
-                                            <Typography style={{ fontSize: 15 }}><b>Total Days: {x.totalDays}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Hours Work: {x.totalHoursWork}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Overtime: {x.totalOT}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Holiday Restday: {x.totalHolidayRestday}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Holiday Restday OT: {x.totalHolidayRestdayOt}</b></Typography>
+                                                </Table>
+                                            </TableContainer>
+                                        </div>
+                                    </CardContent>
 
+                                    <CardActions>
+                                        <Grid container spacing={3}>
+                                            {[
+                                                {
+                                                    totalDays: "Total Days",
+                                                    totalHoursWork: "Hours Work",
+                                                    totalOT: "Overtime",
+                                                    totalHolidayRestday: "Holiday Restday",
+                                                    totalHolidayRestdayOt: "Holiday Restday OT",
+                                                },
+                                                {
+                                                    totalLate: "Late",
+                                                    totalRestday: "Restday (hrs)",
+                                                    totalRestdayOt: "Restday OT (hrs)",
+                                                    totalSpecialHolidayRestday: "Special Holiday Restday (hrs)",
+                                                },
+                                                {
+                                                    totalUT: "Undertime",
+                                                    totalHoliday: "Regular Holiday (hrs)",
+                                                    totalHolidayOt: "Regular Holiday OT (hrs)",
+                                                    totalSpecialHolidayRestdayOt: "Special Holiday Restday OT (hrs)",
+                                                },
+                                                {
+                                                    totalAbsent: "Absent",
+                                                    totalSpecialHoliday: "Special Holiday (hrs)",
+                                                    totalSpecialHolidayOt: "Special Holiday OT (hrs)",
+                                                },
+                                            ].map((group, gIdx) => (
+                                                <Grid item xs={3} key={gIdx}>
+                                                    {Object.entries(group).map(([key, label]) => (
+                                                        <Typography style={{ fontSize: 15 }} key={key}>
+                                                            <b>
+                                                                {label}: {x?.[key] || 0}
+                                                            </b>
+                                                        </Typography>
+                                                    ))}
+                                                </Grid>
+                                            ))}
                                         </Grid>
-                                        <Grid item xs={3}>
-                                            <Typography style={{ fontSize: 15 }}><b>Late: {x.totalLate}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Restday (hrs): {x.totalRestday}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Restday OT (hrs): {x.totalRestdayOt}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Special Holiday Restday (hrs): {x.totalSpecialHolidayRestday}</b></Typography>
-                                        </Grid>
-                                        <Grid item xs={3}>
-                                            <Typography style={{ fontSize: 15 }}><b>Undertime: {x.totalUT}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Regular Holiday (hrs): {x.totalHoliday}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Regular Holiday OT (hrs): {x.totalHolidayOt}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Special Holiday Restday OT (hrs): {x.totalSpecialHolidayRestdayOt}</b></Typography>
-                                        </Grid>
-                                        <Grid item xs={3}>
-                                            <Typography style={{ fontSize: 15 }}><b>Absent: {x.totalAbsent}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Special Holiday (hrs): {x.totalSpecialHoliday}</b></Typography>
-                                            <Typography style={{ fontSize: 15 }}><b>Special Holiday OT (hrs): {x.totalSpecialHolidayOt}</b></Typography>
-                                        </Grid>
-                                    </Grid>
-                                </CardActions>
-                            </Card>
-                        </Grid>
-                    )}
+                                    </CardActions>
+                                </Card>
+                            </Grid>
+                        ))
+                        : null}
                 </Grid>
+
                 {loader === true &&
                     <div style={{ display: 'flex', justifyContent: 'center', marginTop: 200 }}>
                         <CircularProgress />
