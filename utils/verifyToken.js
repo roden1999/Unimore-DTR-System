@@ -1,15 +1,14 @@
-const jwt = require("jsonwebtoken");
-const employee = require("../models/employees");
+const { jwtVerify } = require("jose");
 const { SECRET_TOKEN } = require("../config");
+const employee = require("../models/employees");
 
-//Verify token if valid
-module.exports = function (request, response, next) {
+module.exports = async function (request, response, next) {
 	const token = request.header("auth-token");
 	if (!token) return response.status(401).json({ message: "Access Denied" });
-	try {
-		const verified = jwt.verify(token, SECRET_TOKEN);
-		request.employee = verified;
 
+	try {
+		const { payload } = await jwtVerify(token, new TextEncoder().encode(SECRET_TOKEN));
+		request.employee = payload;
 		next();
 	} catch (error) {
 		response.status(400).json({ message: "Invalid Token" });
