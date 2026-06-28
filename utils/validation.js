@@ -1,6 +1,5 @@
 //Validation
 const Joi = require("@hapi/joi");
-const { allow } = require("@hapi/joi");
 
 //Login Validation
 const loginValidation = (data) => {
@@ -40,13 +39,13 @@ const registrationValidation = (data) => {
 //Regsistration Edit Validation
 const registrationEditValidation = (data) => {
 	const schema = Joi.object({
-		UserName: Joi.string().required().messages({
+		userName: Joi.string().required().messages({
 			"string.empty": `Username is required.`,
 		}),
-		Name: Joi.string().required().messages({
+		name: Joi.string().required().messages({
 			"string.empty": `Name is required.`,
 		}),
-		Role: Joi.string().required().messages({
+		role: Joi.string().required().messages({
 			"string.empty": `Role is required.`,
 		}),
 	});
