@@ -1,63 +1,30 @@
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
-const connectToMongodb = require("./utils/connectToMongodb");
-const fileUpload = require('express-fileupload');
-const app = express();
+const fileUpload = require("express-fileupload");
 const bodyParser = require("body-parser");
 const path = require("path");
-const savePath = require('path').join(__dirname, '/app_data');
 const { PORT } = require("./config");
+const { connectToSqlServer } = require("./config/db");
 
-connectToMongodb();
+const app = express();
 
 app.use(express.json());
-
 app.use(fileUpload());
-
 app.use(cors());
-// parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
-// parse application/json
 app.use(bodyParser.json());
-
-//Images / Files middleware
 app.use(express.static(path.join(__dirname, "/app_data")));
-
 app.use(express.static("client/build"));
 
-// Route to login
-const loginRouter = require("./routers/login");
-app.use("/login", loginRouter);
+app.use("/login", require("./routes/authRoutes"));
+app.use("/users", require("./routes/userRoutes"));
+app.use("/employees", require("./routes/employeeRoutes"));
+app.use("/salary", require("./routes/salaryRoutes"));
+app.use("/payroll", require("./routes/payrollRoutes"));
+app.use("/holiday-schedule", require("./routes/holidayRoutes"));
+app.use("/department", require("./routes/departmentRoutes"));
+app.use("/timelogs", require("./routes/timelogRoutes"));
 
-// Route to users
-const usersRouter = require("./routers/user");
-app.use("/users", usersRouter);
-
-//Route to employees
-const employeesRouter = require("./routers/employees");
-app.use("/employees", employeesRouter);
-
-//Route to salary
-const salaryRouter = require("./routers/salary");
-app.use("/salary", salaryRouter);
-
-//Route to payroll
-const payrollRouter = require("./routers/payroll");
-app.use("/payroll", payrollRouter);
-
-//Route to holiday sched
-const hsRouter = require("./routers/holidaySchedule");
-app.use("/holiday-schedule", hsRouter);
-
-//Route to department
-const departmentRouter = require("./routers/department");
-app.use("/department", departmentRouter);
-
-//Route to timelogs
-const timeLogsRouter = require("./routers/timelogs");
-app.use("/timelogs", timeLogsRouter);
-
-app.listen(PORT, () => {
-	console.log("Server Started");
+connectToSqlServer().then(() => {
+    app.listen(PORT, () => console.log("Server Started"));
 });
