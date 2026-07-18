@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 import {
     AppBar, CssBaseline, Divider, Drawer, IconButton,
     Menu, MenuItem, List, ListItem, ListItemIcon, ListItemText,
-    Badge, Toolbar, Typography, useTheme, Hidden
+    Badge, Toolbar, Typography, useTheme, Hidden, Tooltip, Avatar
 } from '@material-ui/core';
 import {
     PeopleAlt, HomeWork, EventNote,
-    Today, AccountCircle, PeopleAltSharp, Schedule, AssignmentInd
+    Today, AccountCircle, PeopleAltSharp, Schedule, AssignmentInd, Home
 } from '@material-ui/icons';
 import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
@@ -36,14 +36,14 @@ const useStyles = makeStyles((theme) => ({
 
     menuButton: { marginRight: theme.spacing(2) },
 
-    drawerPaper: { width: drawerWidth },
+    drawerPaper: { width: drawerWidth, backgroundColor: '#FFFFFF' },
 
     toolbar: theme.mixins.toolbar,
 
     content: {
         flexGrow: 1,
         padding: theme.spacing(3),
-        backgroundColor: '#C4C4C4C4',
+        backgroundColor: '#F4F6FB',
         minHeight: '100vh',
         marginLeft: 0,
         transition: "margin .3s",
@@ -52,7 +52,27 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: drawerWidth,
     },
 
-    customBadge: { backgroundColor: "#1AEC02", color: "white" }
+    customBadge: { backgroundColor: "#1AEC02", color: "white" },
+
+    navItem: {
+        margin: '4px 12px',
+        borderRadius: 10,
+        color: '#4B5563',
+        '& .MuiListItemIcon-root': { minWidth: 40, color: '#6B7280' },
+    },
+    navItemActive: {
+        backgroundColor: 'rgba(79,115,255,0.10)',
+        color: '#3454D1',
+        fontWeight: 600,
+        '& .MuiListItemIcon-root': { color: '#4F73FF' },
+        '& .MuiListItemText-primary': { fontWeight: 600 },
+    },
+    userAvatar: {
+        width: 34, height: 34,
+        backgroundColor: 'rgba(255,255,255,0.25)',
+        color: '#fff', fontSize: 15, fontWeight: 600,
+    },
+    logo: { objectFit: 'contain' },
 }));
 
 function Main(props) {
@@ -94,46 +114,40 @@ function Main(props) {
         sessionStorage.clear();
     };
 
+    const navItems = [
+        { label: "Employee", icon: <PeopleAlt /> },
+        { label: "Department", icon: <HomeWork /> },
+        { label: "Time Logs", icon: <EventNote /> },
+        { label: "Holiday Schedule", icon: <Today /> },
+        { label: "Shifts", icon: <Schedule /> },
+        { label: "Shift Assignment", icon: <AssignmentInd /> },
+    ];
+    if (role === "Administrator") navItems.push({ label: "Users", icon: <PeopleAltSharp /> });
+
     const drawer = (
         <div>
-            <div className={classes.toolbar} style={{ display: 'flex', justifyContent: 'center' }}>
-                <img src="unimore-logo-landscape.png" width='200' height='60' alt="" />
+            <div className={classes.toolbar} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <img src="unimore-logo-landscape.png" width='190' height='56' alt="" className={classes.logo} />
             </div>
 
             <Divider />
 
-            <List>
-                <ListItem button onClick={() => setPageName("Employee")}>
-                    <ListItemIcon><PeopleAlt /></ListItemIcon>
-                    <ListItemText primary="Employee" />
-                </ListItem>
-                <ListItem button onClick={() => setPageName("Department")}>
-                    <ListItemIcon><HomeWork /></ListItemIcon>
-                    <ListItemText primary="Department" />
-                </ListItem>
-                <ListItem button onClick={() => setPageName("Time Logs")}>
-                    <ListItemIcon><EventNote /></ListItemIcon>
-                    <ListItemText primary="Time Logs" />
-                </ListItem>
-                <ListItem button onClick={() => setPageName("Holiday Schedule")}>
-                    <ListItemIcon><Today /></ListItemIcon>
-                    <ListItemText primary="Holiday Schedule" />
-                </ListItem>
-                <ListItem button onClick={() => setPageName("Shifts")}>
-                    <ListItemIcon><Schedule /></ListItemIcon>
-                    <ListItemText primary="Shifts" />
-                </ListItem>
-                <ListItem button onClick={() => setPageName("Shift Assignment")}>
-                    <ListItemIcon><AssignmentInd /></ListItemIcon>
-                    <ListItemText primary="Shift Assignment" />
-                </ListItem>
+            <Typography variant="caption" style={{ padding: '16px 20px 4px', display: 'block', color: '#9CA3AF', letterSpacing: 1 }}>
+                HR MODULE
+            </Typography>
 
-                {role === "Administrator" &&
-                    <ListItem button onClick={() => setPageName("Users")}>
-                        <ListItemIcon><PeopleAltSharp /></ListItemIcon>
-                        <ListItemText primary="Users" />
+            <List>
+                {navItems.map((item) => (
+                    <ListItem
+                        button
+                        key={item.label}
+                        onClick={() => setPageName(item.label)}
+                        className={`${classes.navItem} ${pageName === item.label ? classes.navItemActive : ""}`}
+                    >
+                        <ListItemIcon>{item.icon}</ListItemIcon>
+                        <ListItemText primary={item.label} />
                     </ListItem>
-                }
+                ))}
             </List>
         </div>
     );
@@ -166,12 +180,20 @@ function Main(props) {
                         {pageName}
                     </Typography>
 
+                    <Tooltip title="Back to Modules">
+                        <IconButton color="inherit" onClick={() => onExitModule && onExitModule()}>
+                            <Home />
+                        </IconButton>
+                    </Tooltip>
+
                     <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)}>
                         <Badge variant="dot" color="secondary" classes={{ badge: classes.customBadge }}>
-                            <AccountCircle />
+                            <Avatar className={classes.userAvatar}>
+                                {name ? name.charAt(0).toUpperCase() : <AccountCircle />}
+                            </Avatar>
                         </Badge>
-                        <ListItemText style={{ marginLeft: 7 }} primary={name}
-                            secondary={<span style={{ fontSize: 12, color: '#BEBFC1' }}>{role}</span>}
+                        <ListItemText style={{ marginLeft: 10 }} primary={name}
+                            secondary={<span style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>{role}</span>}
                         />
                     </IconButton>
 
@@ -180,9 +202,6 @@ function Main(props) {
                         open={Boolean(anchorEl)}
                         onClose={() => setAnchorEl(null)}
                     >
-                        {onExitModule &&
-                            <MenuItem onClick={() => { setAnchorEl(null); onExitModule(); }}>Modules</MenuItem>
-                        }
                         <MenuItem onClick={logOut}>Logout</MenuItem>
                     </Menu>
                 </Toolbar>
