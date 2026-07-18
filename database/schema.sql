@@ -127,4 +127,41 @@ CREATE TABLE HolidaySchedules (
     INDEX IX_HolidaySchedules_Date (Date)
 );
 
+-- ============================================================
+--  Shifts  (reusable shift templates)
+--    The "original" 8AM-5PM shift lives in DepartmentSchedules.
+--    This table holds alternate shifts (e.g. a night shift) that
+--    can be temporarily assigned to employees via overrides.
+-- ============================================================
+CREATE TABLE Shifts (
+    Id              INT IDENTITY(1,1) PRIMARY KEY,
+    Name            NVARCHAR(100)  NOT NULL,   -- "Night Shift 8PM-5AM"
+    TimeStart       NVARCHAR(20)   NOT NULL,   -- "8:00 pm"
+    TimeEnd         NVARCHAR(20)   NOT NULL,   -- "5:00 am"
+    CrossesMidnight BIT            NOT NULL DEFAULT 0,  -- set when TimeEnd <= TimeStart
+    IsDeleted       BIT            NOT NULL DEFAULT 0,
+    CreatedAt       DATETIME       DEFAULT GETDATE()
+);
+
+-- ============================================================
+--  Employee Shift Overrides  (expirable temporary shift)
+--    Within [StartDate, EndDate] the employee follows ShiftId
+--    instead of their department's original schedule.  Once
+--    EndDate passes the DTR calculator finds no active override
+--    and the employee automatically reverts to 8AM-5PM.
+--    Batch assign = one row per employee (same shift + range).
+--    Solo assign  = a single row.
+-- ============================================================
+CREATE TABLE EmployeeShiftOverrides (
+    Id          INT IDENTITY(1,1) PRIMARY KEY,
+    EmployeeId  INT            NOT NULL REFERENCES Employees(Id) ON DELETE CASCADE,
+    ShiftId     INT            NOT NULL REFERENCES Shifts(Id),
+    StartDate   DATE           NOT NULL,
+    EndDate     DATE           NOT NULL,
+    Note        NVARCHAR(200)  NULL,
+    IsDeleted   BIT            NOT NULL DEFAULT 0,
+    CreatedAt   DATETIME       DEFAULT GETDATE(),
+    INDEX IX_Override_Emp_Dates (EmployeeId, StartDate, EndDate)
+);
+
 GO
