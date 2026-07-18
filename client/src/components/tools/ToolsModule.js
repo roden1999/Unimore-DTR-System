@@ -13,7 +13,11 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import ToolsPage from './ToolsPage';
 import ConsumablesPage from './ConsumablesPage';
-import Placeholder from './Placeholder';
+import SparePartsPage from './SparePartsPage';
+import RecordsPage from './RecordsPage';
+import ToolFormsPage from './ToolFormsPage';
+import ConsumableFormsPage from './ConsumableFormsPage';
+import EmployeesPage from './EmployeesPage';
 import User from '../user';
 import UserContext from '../context/userContext';
 
@@ -154,11 +158,11 @@ function ToolsModule({ path, navigate, onExitModule }) {
                 <div className={classes.toolbar} />
                 {pageName === 'Tools' && <ToolsPage />}
                 {pageName === 'Consumables' && <ConsumablesPage />}
-                {pageName === 'Machine Spare Parts' && <Placeholder title="Machine Spare Parts" />}
-                {pageName === 'Borrowed / Returned' && <Placeholder title="Borrowed / Returned Records" />}
-                {pageName === 'Tool Forms' && <Placeholder title="Tool Forms" />}
-                {pageName === 'Consumable Forms' && <Placeholder title="Consumable Forms" />}
-                {pageName === 'Employees' && <Placeholder title="Employees" />}
+                {pageName === 'Machine Spare Parts' && <SparePartsPage />}
+                {pageName === 'Borrowed / Returned' && <RecordsPage />}
+                {pageName === 'Tool Forms' && <ToolFormsPage />}
+                {pageName === 'Consumable Forms' && <ConsumableFormsPage />}
+                {pageName === 'Employees' && <EmployeesPage />}
                 {pageName === 'Users' && role === 'Administrator' && <User />}
             </main>
         </div>
