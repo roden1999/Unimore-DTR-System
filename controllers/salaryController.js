@@ -82,7 +82,7 @@ const listSalaries = async (request, response) => {
             const dept = await departmentModel.findByIdRaw(emp.DepartmentId);
 
             result.push({
-                id: emp.Id,
+                _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim(),
                 department: dept ? dept.Department : "",

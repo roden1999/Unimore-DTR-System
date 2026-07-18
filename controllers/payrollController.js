@@ -76,7 +76,7 @@ const payrollList = async (request, response) => {
             const totalEarnings = (basic + allowance + amountOt + tmonthPay + amountRestday + amountRestdayOt + amountHoliday + amountHolidayOt + amountSH + amountSHOt) - absensesTardiness;
 
             data.push({
-                id: emp.Id,
+                _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim(),
                 department: dept ? dept.Department : "",

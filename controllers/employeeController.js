@@ -7,7 +7,7 @@ const PER_PAGE = 20;
 const buildEmployeeResponse = async (emp) => {
     const dept = await departmentModel.findByIdRaw(emp.DepartmentId);
     return {
-        id: emp.Id,
+        _id: emp.Id,
         employeeNo: emp.EmployeeNo,
         firstName: emp.FirstName,
         middleName: emp.MiddleName,
@@ -124,7 +124,14 @@ const employeeOptionsByDepartment = async (request, response) => {
         const employees = depIds.length > 0
             ? await employeeModel.getByDepartmentIds(depIds)
             : await employeeModel.getAll();
-        response.status(200).json(employees);
+        response.status(200).json(employees.map(e => ({
+            _id: e.Id,
+            employeeNo: e.EmployeeNo,
+            firstName: e.FirstName,
+            middleName: e.MiddleName,
+            lastName: e.LastName,
+            suffix: e.Suffix,
+        })));
     } catch (error) {
         response.status(500).json({ error: error.message });
     }

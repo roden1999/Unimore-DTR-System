@@ -94,7 +94,7 @@ const rawList = async (request, response) => {
         const result = await Promise.all(logs.map(async (log) => {
             const emp = await employeeModel.findByEmployeeNo(log.EmployeeNo);
             return {
-                id: log.Id,
+                _id: log.Id,
                 employeeNo: log.EmployeeNo,
                 employeeName: emp ? `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim() : "",
                 timeInOut: log.TimeInOut,
@@ -171,7 +171,7 @@ const detailedList = async (request, response) => {
                 : timeLogs;
 
             data.push({
-                id: emp.Id,
+                _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim(),
                 department: dept ? dept.Department : "",
@@ -232,7 +232,7 @@ const dtrCorrection = async (request, response) => {
                 : await dtrCorrectionModel.getByDateRange(fromDate, toDate, offset, DTR_PER_PAGE);
 
             data.push({
-                id: emp.Id,
+                _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName}`.trim(),
                 corrections,

@@ -16,11 +16,34 @@ function App() {
     user: undefined,
   });
   const [loader, setLoader] = useState(true);
-  const [activeModule, setActiveModule] = useState(undefined);
+  const [path, setPath] = useState(window.location.pathname);
+
+  // HR module routes.
+  const HR_PATHS = ['/employee', '/department', '/timelogs', '/holiday', '/shifts', '/shift-assignment', '/users'];
+
+  const navigate = (to) => {
+    window.history.pushState({}, '', to);
+    setPath(to);
+  };
+
+  // Keep state in sync with browser back/forward.
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
 
   useEffect(() => {
     setTimeout(() => setLoader(false), 2000)
   }, [loader, setLoader]);
+
+  // Land on /home once logged in if no specific route was requested.
+  useEffect(() => {
+    if (!loader && userData.user && (path === '/' || path === '')) {
+      window.history.replaceState({}, '', '/home');
+      setPath('/home');
+    }
+  }, [loader, userData.user, path]);
 
   useEffect(() => {
     const data = sessionStorage.getItem("userData");
@@ -65,12 +88,12 @@ function App() {
           overflow: 'hidden',
         }}
       >
-        {loader === false && userData.user && activeModule === 'HR' &&
-          <Main onExitModule={() => setActiveModule(undefined)} />
+        {loader === false && userData.user && HR_PATHS.includes(path) &&
+          <Main path={path} navigate={navigate} onExitModule={() => navigate('/home')} />
         }
 
-        {loader === false && userData.user && activeModule !== 'HR' &&
-          <ModuleSelection onSelectHR={() => setActiveModule('HR')} />
+        {loader === false && userData.user && !HR_PATHS.includes(path) &&
+          <ModuleSelection onSelectHR={() => navigate('/employee')} />
         }
 
         {loader === false && !userData.user &&
