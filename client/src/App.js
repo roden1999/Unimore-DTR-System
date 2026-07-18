@@ -5,6 +5,7 @@ import { ThemeProvider } from '@material-ui/core/styles';
 import Main from './components/main';
 import Login from './components/login';
 import ModuleSelection from './components/moduleSelection';
+import ToolsModule from './components/tools/ToolsModule';
 import UserContext from './components/context/userContext';
 import theme from './theme';
 
@@ -92,8 +93,12 @@ function App() {
           <Main path={path} navigate={navigate} onExitModule={() => navigate('/home')} />
         }
 
-        {loader === false && userData.user && !HR_PATHS.includes(path) &&
-          <ModuleSelection onSelectHR={() => navigate('/employee')} />
+        {loader === false && userData.user && path.startsWith('/tools') &&
+          <ToolsModule path={path} navigate={navigate} onExitModule={() => navigate('/home')} />
+        }
+
+        {loader === false && userData.user && !HR_PATHS.includes(path) && !path.startsWith('/tools') &&
+          <ModuleSelection onSelectHR={() => navigate('/employee')} onSelectTools={() => navigate('/tools/tools')} />
         }
 
         {loader === false && !userData.user &&
