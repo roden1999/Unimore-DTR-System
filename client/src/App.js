@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
+import { ThemeProvider } from '@material-ui/core/styles';
+
 import Main from './components/main';
 import Login from './components/login';
 import ModuleSelection from './components/moduleSelection';
 import UserContext from './components/context/userContext';
+import theme from './theme';
 
 const axios = require('axios');
 
@@ -51,6 +54,7 @@ function App() {
     checkLogin();
   }, []);
   return (
+    <ThemeProvider theme={theme}>
     <UserContext.Provider value={{ userData, setUserData }}>
       <div
         style={{
@@ -74,6 +78,7 @@ function App() {
         }
       </div>
     </UserContext.Provider >
+    </ThemeProvider>
   );
 }
 
