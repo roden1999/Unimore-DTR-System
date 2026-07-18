@@ -11,6 +11,15 @@ const buildTimePerDay = (schedules) => {
     }));
 };
 
+// The client expects the original Mongo-style shape: _id, lowercase
+// fields, and timePerDay as a JSON string (it calls JSON.parse on it).
+const shapeDepartment = (dept, schedules) => ({
+    _id: dept.Id,
+    department: dept.Department,
+    dayNightShift: !!dept.DayNightShift,
+    timePerDay: JSON.stringify(buildTimePerDay(schedules)),
+});
+
 const createDepartment = async (request, response) => {
     try {
         const { error } = departmentValidation(request.body);
@@ -57,7 +66,7 @@ const updateDepartment = async (request, response) => {
         }
 
         const schedules = await departmentModel.getSchedules(id);
-        response.status(200).json({ ...updated, timePerDay: buildTimePerDay(schedules) });
+        response.status(200).json(shapeDepartment(updated, schedules));
     } catch (error) {
         response.status(500).json({ error: "Error" });
     }
@@ -76,7 +85,7 @@ const listDepartments = async (request, response) => {
         const result = [];
         for (const dept of departments) {
             const schedules = await departmentModel.getSchedules(dept.Id);
-            result.push({ ...dept, timePerDay: buildTimePerDay(schedules) });
+            result.push(shapeDepartment(dept, schedules));
         }
 
         response.status(200).json(result);
@@ -88,7 +97,7 @@ const listDepartments = async (request, response) => {
 const departmentOptions = async (request, response) => {
     try {
         const departments = await departmentModel.getAll();
-        response.status(200).json(departments);
+        response.status(200).json(departments.map(d => ({ _id: d.Id, department: d.Department })));
     } catch (error) {
         response.status(500).json({ error: error.message });
     }

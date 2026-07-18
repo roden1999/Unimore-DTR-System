@@ -68,16 +68,19 @@ const changePassword = async (request, response) => {
     }
 };
 
+// Client expects Mongo-style _id alongside the PascalCase fields.
+const shapeUser = (u) => ({ _id: u.Id, UserName: u.UserName, Name: u.Name, Role: u.Role });
+
 const listUsers = async (request, response) => {
     try {
         const selectedUsers = request.body;
         if (Object.keys(selectedUsers).length > 0) {
             const ids = Object.values(selectedUsers).map(u => u.value);
             const users = await userModel.getByIds(ids);
-            return response.status(200).json(users);
+            return response.status(200).json(users.map(shapeUser));
         }
         const users = await userModel.getAll();
-        response.status(200).json(users);
+        response.status(200).json(users.map(shapeUser));
     } catch (error) {
         response.status(500).json({ error: error.message });
     }
@@ -86,7 +89,7 @@ const listUsers = async (request, response) => {
 const searchOptions = async (request, response) => {
     try {
         const users = await userModel.getAll();
-        response.status(200).json(users);
+        response.status(200).json(users.map(shapeUser));
     } catch (error) {
         response.status(500).json({ error: error.message });
     }

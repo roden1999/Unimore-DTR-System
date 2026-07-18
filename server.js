@@ -27,6 +27,12 @@ app.use("/timelogs", require("./routes/timelogRoutes"));
 app.use("/shifts", require("./routes/shiftRoutes"));
 app.use("/shift-overrides", require("./routes/shiftOverrideRoutes"));
 
+// SPA fallback: any non-API GET returns the client so client-side
+// routes (/employee, /department, ...) survive a refresh / deep link.
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+});
+
 connectToSqlServer().then(() => {
     app.listen(PORT, () => console.log("Server Started"));
 });

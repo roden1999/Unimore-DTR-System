@@ -75,31 +75,36 @@ const useStyles = makeStyles((theme) => ({
     logo: { objectFit: 'contain' },
 }));
 
+// Map between browser routes and page labels.
+const PATH_TO_PAGE = {
+    '/employee': 'Employee',
+    '/department': 'Department',
+    '/timelogs': 'Time Logs',
+    '/holiday': 'Holiday Schedule',
+    '/shifts': 'Shifts',
+    '/shift-assignment': 'Shift Assignment',
+    '/users': 'Users',
+};
+
 function Main(props) {
-    const { window, onExitModule } = props;
+    const { window, onExitModule, path, navigate } = props;
     const classes = useStyles();
     const theme = useTheme();
     const { setUserData } = useContext(UserContext);
 
     const [mobileOpen, setMobileOpen] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(true);
-    const [pageName, setPageName] = useState("Employee");
     const [name, setName] = useState("");
     const [role, setRole] = useState("");
     const [anchorEl, setAnchorEl] = useState(null);
 
-    useEffect(() => {
-        const data = sessionStorage.getItem('page');
-        if (data) setPageName(data);
+    const pageName = PATH_TO_PAGE[path] || 'Employee'; // page is driven by the URL
 
+    useEffect(() => {
         const user = JSON.parse(sessionStorage.getItem('user'));
         setRole(user.role);
         setName(user.Name);
     }, []);
-
-    useEffect(() => {
-        sessionStorage.setItem('page', pageName);
-    }, [pageName]);
 
     const safeWindow = (typeof window !== "undefined" && window.innerWidth) 
     ? window.innerWidth 
@@ -115,14 +120,19 @@ function Main(props) {
     };
 
     const navItems = [
-        { label: "Employee", icon: <PeopleAlt /> },
-        { label: "Department", icon: <HomeWork /> },
-        { label: "Time Logs", icon: <EventNote /> },
-        { label: "Holiday Schedule", icon: <Today /> },
-        { label: "Shifts", icon: <Schedule /> },
-        { label: "Shift Assignment", icon: <AssignmentInd /> },
+        { label: "Employee", path: "/employee", icon: <PeopleAlt /> },
+        { label: "Department", path: "/department", icon: <HomeWork /> },
+        { label: "Time Logs", path: "/timelogs", icon: <EventNote /> },
+        { label: "Holiday Schedule", path: "/holiday", icon: <Today /> },
+        { label: "Shifts", path: "/shifts", icon: <Schedule /> },
+        { label: "Shift Assignment", path: "/shift-assignment", icon: <AssignmentInd /> },
     ];
-    if (role === "Administrator") navItems.push({ label: "Users", icon: <PeopleAltSharp /> });
+    if (role === "Administrator") navItems.push({ label: "Users", path: "/users", icon: <PeopleAltSharp /> });
+
+    const go = (to) => {
+        navigate(to);
+        if (safeWindow < 960) setMobileOpen(false);
+    };
 
     const drawer = (
         <div>
@@ -141,8 +151,8 @@ function Main(props) {
                     <ListItem
                         button
                         key={item.label}
-                        onClick={() => setPageName(item.label)}
-                        className={`${classes.navItem} ${pageName === item.label ? classes.navItemActive : ""}`}
+                        onClick={() => go(item.path)}
+                        className={`${classes.navItem} ${path === item.path ? classes.navItemActive : ""}`}
                     >
                         <ListItemIcon>{item.icon}</ListItemIcon>
                         <ListItemText primary={item.label} />
