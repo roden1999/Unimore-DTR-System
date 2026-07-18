@@ -23,6 +23,12 @@ IF COL_LENGTH('Employees', 'Image') IS NULL
     ALTER TABLE Employees ADD Image NVARCHAR(MAX) NULL;
 GO
 
+-- Employees are shared with HR. The tools module can add a person
+-- without a department, so allow DepartmentId to be NULL. (HR still
+-- sets it; the DTR views already treat a missing department as blank.)
+ALTER TABLE Employees ALTER COLUMN DepartmentId INT NULL;
+GO
+
 -- ------------------------------------------------------------
 -- Tools
 -- ------------------------------------------------------------
