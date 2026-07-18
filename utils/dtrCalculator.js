@@ -3,6 +3,9 @@ const timelogModel = require("../models/timelogModel");
 const dtrCorrectionModel = require("../models/dtrCorrectionModel");
 const holidayModel = require("../models/holidayModel");
 const departmentModel = require("../models/departmentModel");
+const shiftOverrideModel = require("../models/shiftOverrideModel");
+
+const BREAK_HOURS = 1; // every shift includes a fixed 1-hour break
 
 const buildDateRange = (dateStr, h, m, s) => {
     const d = new Date(dateStr);
@@ -10,20 +13,141 @@ const buildDateRange = (dateStr, h, m, s) => {
     return d;
 };
 
-const computeDayEntry = async (emp, dateStr, schedules) => {
+// Compute a day entry for a shift that crosses midnight. The shift
+// starts on `dateStr` and ends the following morning. Late / undertime
+// / hours-worked are measured against the shift start/end datetimes,
+// with a fixed 1-hour break deducted. The whole shift is attributed to
+// its start date (dateStr).
+const computeNightShiftEntry = async (emp, dateStr, ctx) => {
+    const { depIn, depOut, day, holiday, dtr, shiftName } = ctx;
+    const nextDate = moment(dateStr).add(1, "d").format("YYYY-MM-DD");
+
+    const shiftStart = moment(`${dateStr} ${depIn}`, "YYYY-MM-DD h:mm a");
+    const shiftEnd = moment(`${nextDate} ${depOut}`, "YYYY-MM-DD h:mm a");
+    const lateThreshold = shiftStart.clone().add(15, "minutes");
+
+    // In-punch: from an hour before shift start to end of the start day.
+    const inWindowStart = shiftStart.clone().subtract(1, "hour").toDate();
+    const inWindowEnd = buildDateRange(dateStr, 23, 59, 59);
+    // Out-punch: next-day early morning up to a few hours past shift end.
+    const outWindowStart = buildDateRange(nextDate, 0, 0, 0);
+    const outWindowEnd = shiftEnd.clone().add(4, "hours").toDate();
+
+    let timeIn = "";
+    let timeOut = "";
+    let reason = dtr ? (dtr.Reason || "") : "";
+    let remarks = "";
+    let late = 0, ut = 0, ot = 0, hoursWork = 0;
+
+    if (dtr && dtr.Remarks !== "Overtime") {
+        timeIn = dtr.TimeIn ? moment(dtr.TimeIn, "h:mm A").format("h:mm A") : "";
+        timeOut = dtr.TimeOut ? moment(dtr.TimeOut, "h:mm A").format("h:mm A") : "";
+    } else {
+        const inRec = await timelogModel.getTimeIn(emp.EmployeeNo, inWindowStart, inWindowEnd);
+        const outRec = await timelogModel.getTimeOut(emp.EmployeeNo, outWindowStart, outWindowEnd);
+        timeIn = inRec ? moment(inRec.DateTime).format("h:mm A") : "";
+        timeOut = outRec ? moment(outRec.DateTime).format("h:mm A") : "";
+    }
+
+    const actualIn = timeIn ? moment(`${dateStr} ${timeIn}`, "YYYY-MM-DD h:mm A") : null;
+    const actualOut = timeOut ? moment(`${nextDate} ${timeOut}`, "YYYY-MM-DD h:mm A") : null;
+
+    if (actualIn && actualIn.isAfter(lateThreshold)) {
+        late = actualIn.diff(shiftStart, "minutes") / 60;
+    }
+    if (actualOut && actualOut.isBefore(shiftEnd) && !dtr) {
+        ut = shiftEnd.diff(actualOut, "minutes") / 60;
+        remarks = "Undertime";
+    }
+    if (actualIn && actualOut) {
+        const gross = actualOut.diff(actualIn, "minutes") / 60;
+        hoursWork = Math.max(0, gross - BREAK_HOURS);
+    }
+
+    if (dtr && dtr.Remarks) remarks = dtr.Remarks;
+    if (dtr && dtr.Remarks === "Overtime") ot = dtr.OtHours || 0;
+
+    if (dtr && dtr.Remarks === "Manual Timelog") {
+        hoursWork = dtr.HoursWork;
+        ot = dtr.OtHours;
+        ut = dtr.Undertime;
+    }
+
+    if (!timeIn && !timeOut) remarks = remarks || "Absent";
+    else if ((!timeIn || !timeOut) && day !== "Sunday") remarks = remarks || "Absent";
+    else if (!remarks && actualIn && actualIn.isAfter(lateThreshold)) remarks = "Late";
+
+    if (day === "Sunday" && !dtr) {
+        timeIn = ""; timeOut = ""; hoursWork = 0; late = 0; ut = 0; ot = 0;
+        remarks = "Rest Day";
+    }
+
+    if (holiday && !dtr) {
+        timeIn = ""; timeOut = ""; hoursWork = 8; late = 0; ut = 0; ot = 0;
+        remarks = holiday.Type;
+        reason = holiday.Title;
+    }
+
+    return {
+        timeIn: moment(timeIn, "h:mm A").isValid() ? moment(timeIn, "h:mm A").format("h:mm A") : "",
+        breakOut: "",
+        breakIn: "",
+        timeOut: moment(timeOut, "h:mm A").isValid() ? moment(timeOut, "h:mm A").format("h:mm A") : "",
+        timeStartEnd: `${moment(depIn, "h:mm a").format("h:mm A")} - ${moment(depOut, "h:mm a").format("h:mm A")}`,
+        dateTime: moment(dateStr).toDate(),
+        day,
+        hoursWork,
+        late,
+        ut,
+        ot,
+        remarks,
+        reason,
+        totalHw: 0,
+        totalHwOt: 0,
+        shiftName: shiftName || "Night Shift",
+    };
+};
+
+// Pick the active override for a date out of the pre-loaded list.
+const resolveOverride = (overrides, dateStr) => {
+    const d = moment(dateStr, "YYYY-MM-DD");
+    for (const o of overrides) {
+        if (d.isSameOrAfter(moment(o.StartDate), "day") && d.isSameOrBefore(moment(o.EndDate), "day")) {
+            return o;
+        }
+    }
+    return null;
+};
+
+const computeDayEntry = async (emp, dateStr, schedules, override) => {
     const day = moment(dateStr).format("dddd");
 
+    // An active override wins over the department's original schedule.
     let depIn = "";
     let depOut = "";
-    for (const s of schedules) {
-        if (s.DayName === day) {
-            depIn = s.TimeStart;
-            depOut = s.TimeEnd;
+    let crossesMidnight = false;
+    if (override) {
+        depIn = override.TimeStart;
+        depOut = override.TimeEnd;
+        crossesMidnight = !!override.CrossesMidnight;
+    } else {
+        for (const s of schedules) {
+            if (s.DayName === day) {
+                depIn = s.TimeStart;
+                depOut = s.TimeEnd;
+            }
         }
     }
 
     const holiday = await holidayModel.findByDate(dateStr);
     const dtr = await dtrCorrectionModel.findByEmployeeNoAndDate(emp.EmployeeNo, dateStr);
+
+    // Night shift (e.g. 8PM-5AM) is handled separately because its
+    // scheduled end and time-out punch land on the next calendar day,
+    // which the day-shift logic below cannot express.
+    if (crossesMidnight) {
+        return computeNightShiftEntry(emp, dateStr, { depIn, depOut, day, holiday, dtr, shiftName: override.ShiftName });
+    }
 
     const dayStart5am = buildDateRange(dateStr, 5, 0, 0);
     const dayEnd = buildDateRange(dateStr, 23, 59, 59);
@@ -189,6 +313,8 @@ const computeDayEntry = async (emp, dateStr, schedules) => {
 const computeEmployeeDTR = async (emp, fromDate, toDate) => {
     const dept = await departmentModel.findByIdRaw(emp.DepartmentId);
     const schedules = await departmentModel.getSchedules(emp.DepartmentId);
+    // Load this employee's active shift overrides for the whole range once.
+    const overrides = await shiftOverrideModel.getForEmployeeInRange(emp.Id, fromDate, toDate);
 
     let totalDays = 0, totalHrsWork = 0, totalRestday = 0, totalRestdayOt = 0;
     let totalHoliday = 0, totalHolidayOt = 0, totalSpecialHoliday = 0, totalSpecialHolidayOt = 0;
@@ -200,7 +326,8 @@ const computeEmployeeDTR = async (emp, fromDate, toDate) => {
 
     while (theDate <= new Date(toDate)) {
         const dateStr = moment(theDate).format("YYYY-MM-DD");
-        const entry = await computeDayEntry(emp, dateStr, schedules);
+        const override = resolveOverride(overrides, dateStr);
+        const entry = await computeDayEntry(emp, dateStr, schedules, override);
 
         const { remarks, hoursWork, late, ut, ot, totalHw, totalHwOt } = entry;
         const isAbsent = ["Absent", "SL w/o Pay", "VL w/o Pay"].includes(remarks);

@@ -24,6 +24,8 @@ app.use("/payroll", require("./routes/payrollRoutes"));
 app.use("/holiday-schedule", require("./routes/holidayRoutes"));
 app.use("/department", require("./routes/departmentRoutes"));
 app.use("/timelogs", require("./routes/timelogRoutes"));
+app.use("/shifts", require("./routes/shiftRoutes"));
+app.use("/shift-overrides", require("./routes/shiftOverrideRoutes"));
 
 connectToSqlServer().then(() => {
     app.listen(PORT, () => console.log("Server Started"));

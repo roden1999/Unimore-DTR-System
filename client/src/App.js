@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import Main from './components/main';
 import Login from './components/login';
+import ModuleSelection from './components/moduleSelection';
 import UserContext from './components/context/userContext';
 
 const axios = require('axios');
@@ -12,6 +13,7 @@ function App() {
     user: undefined,
   });
   const [loader, setLoader] = useState(true);
+  const [activeModule, setActiveModule] = useState(undefined);
 
   useEffect(() => {
     setTimeout(() => setLoader(false), 2000)
@@ -59,8 +61,12 @@ function App() {
           overflow: 'hidden',
         }}
       >
-        {loader === false && userData.user &&
-          <Main />
+        {loader === false && userData.user && activeModule === 'HR' &&
+          <Main onExitModule={() => setActiveModule(undefined)} />
+        }
+
+        {loader === false && userData.user && activeModule !== 'HR' &&
+          <ModuleSelection onSelectHR={() => setActiveModule('HR')} />
         }
 
         {loader === false && !userData.user &&

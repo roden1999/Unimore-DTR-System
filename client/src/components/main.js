@@ -7,7 +7,7 @@ import {
 } from '@material-ui/core';
 import {
     PeopleAlt, HomeWork, EventNote,
-    Today, AccountCircle, PeopleAltSharp
+    Today, AccountCircle, PeopleAltSharp, Schedule, AssignmentInd
 } from '@material-ui/icons';
 import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
@@ -17,6 +17,8 @@ import Department from "./department";
 import TimeLogs from "./timeLogs";
 import HolidaySchedule from "./holidaySchedule";
 import User from "./user";
+import Shifts from "./shifts";
+import ShiftAssignment from "./shiftAssignment";
 import UserContext from './context/userContext';
 
 const drawerWidth = 240;
@@ -54,7 +56,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function Main(props) {
-    const { window } = props;
+    const { window, onExitModule } = props;
     const classes = useStyles();
     const theme = useTheme();
     const { setUserData } = useContext(UserContext);
@@ -117,6 +119,14 @@ function Main(props) {
                     <ListItemIcon><Today /></ListItemIcon>
                     <ListItemText primary="Holiday Schedule" />
                 </ListItem>
+                <ListItem button onClick={() => setPageName("Shifts")}>
+                    <ListItemIcon><Schedule /></ListItemIcon>
+                    <ListItemText primary="Shifts" />
+                </ListItem>
+                <ListItem button onClick={() => setPageName("Shift Assignment")}>
+                    <ListItemIcon><AssignmentInd /></ListItemIcon>
+                    <ListItemText primary="Shift Assignment" />
+                </ListItem>
 
                 {role === "Administrator" &&
                     <ListItem button onClick={() => setPageName("Users")}>
@@ -170,6 +180,9 @@ function Main(props) {
                         open={Boolean(anchorEl)}
                         onClose={() => setAnchorEl(null)}
                     >
+                        {onExitModule &&
+                            <MenuItem onClick={() => { setAnchorEl(null); onExitModule(); }}>Modules</MenuItem>
+                        }
                         <MenuItem onClick={logOut}>Logout</MenuItem>
                     </Menu>
                 </Toolbar>
@@ -210,6 +223,8 @@ function Main(props) {
                 {pageName === "Department" && <Department />}
                 {pageName === "Time Logs" && <TimeLogs />}
                 {pageName === "Holiday Schedule" && <HolidaySchedule />}
+                {pageName === "Shifts" && <Shifts />}
+                {pageName === "Shift Assignment" && <ShiftAssignment />}
                 {pageName === "Users" && role === "Administrator" && <User />}
 
             </main>
