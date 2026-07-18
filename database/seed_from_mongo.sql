@@ -166,10 +166,15 @@ SELECT
 FROM @Emp e;
 
 COMMIT TRANSACTION;
+
+DECLARE @dCount INT, @sCount INT, @eCount INT;
+SELECT @dCount = COUNT(*) FROM Departments;
+SELECT @sCount = COUNT(*) FROM DepartmentSchedules;
+SELECT @eCount = COUNT(*) FROM Employees;
 PRINT 'Migration complete.';
-PRINT 'Departments: '        + CAST((SELECT COUNT(*) FROM Departments) AS NVARCHAR(10));
-PRINT 'DepartmentSchedules: '+ CAST((SELECT COUNT(*) FROM DepartmentSchedules) AS NVARCHAR(10));
-PRINT 'Employees: '          + CAST((SELECT COUNT(*) FROM Employees) AS NVARCHAR(10));
+PRINT 'Departments: '         + CAST(@dCount AS NVARCHAR(10));
+PRINT 'DepartmentSchedules: ' + CAST(@sCount AS NVARCHAR(10));
+PRINT 'Employees: '           + CAST(@eCount AS NVARCHAR(10));
 END TRY
 BEGIN CATCH
     IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
