@@ -131,6 +131,7 @@ const payrollList = async (request, response) => {
                 totalEarnings: totalEarnings > 0 ? totalEarnings.toFixed(2) : "0.00",
                 totalDeduction: totalDeduction.toFixed(2),
                 netOfTardiness: netOfTardiness.toFixed(2),
+                totalAbsensesTardiness: absensesTardiness.toFixed(2),
                 grossSalary: (netOfTardiness + amountOt).toFixed(2),
                 tMonthPayMetalAsia: tmonthPayMetalAsia > 0 ? tmonthPayMetalAsia.toFixed(2) : "0.00",
                 netPayMetalAsia: (totalEarnings - totalDeduction) > 0 ? (totalEarnings - totalDeduction).toFixed(2) : "0.00",

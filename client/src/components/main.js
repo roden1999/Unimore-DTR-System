@@ -7,7 +7,8 @@ import {
 } from '@material-ui/core';
 import {
     PeopleAlt, HomeWork, EventNote,
-    Today, AccountCircle, PeopleAltSharp, Schedule, AssignmentInd, Home
+    Today, AccountCircle, PeopleAltSharp, Schedule, AssignmentInd, Home,
+    AttachMoney, Receipt
 } from '@material-ui/icons';
 import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
@@ -19,6 +20,8 @@ import HolidaySchedule from "./holidaySchedule";
 import User from "./user";
 import Shifts from "./shifts";
 import ShiftAssignment from "./shiftAssignment";
+import SalaryAndDeductions from "./salaryAndDeductions";
+import Payroll from "./payroll";
 import UserContext from './context/userContext';
 
 const drawerWidth = 240;
@@ -83,6 +86,8 @@ const PATH_TO_PAGE = {
     '/holiday': 'Holiday Schedule',
     '/shifts': 'Shifts',
     '/shift-assignment': 'Shift Assignment',
+    '/salary': 'Salary & Deductions',
+    '/payroll': 'Payroll',
     '/users': 'Users',
 };
 
@@ -126,6 +131,8 @@ function Main(props) {
         { label: "Holiday Schedule", path: "/holiday", icon: <Today /> },
         { label: "Shifts", path: "/shifts", icon: <Schedule /> },
         { label: "Shift Assignment", path: "/shift-assignment", icon: <AssignmentInd /> },
+        { label: "Salary & Deductions", path: "/salary", icon: <AttachMoney /> },
+        { label: "Payroll", path: "/payroll", icon: <Receipt /> },
     ];
     if (role === "Administrator") navItems.push({ label: "Users", path: "/users", icon: <PeopleAltSharp /> });
 
@@ -254,6 +261,8 @@ function Main(props) {
                 {pageName === "Holiday Schedule" && <HolidaySchedule />}
                 {pageName === "Shifts" && <Shifts />}
                 {pageName === "Shift Assignment" && <ShiftAssignment />}
+                {pageName === "Salary & Deductions" && <SalaryAndDeductions />}
+                {pageName === "Payroll" && <Payroll />}
                 {pageName === "Users" && role === "Administrator" && <User />}
 
             </main>

@@ -20,7 +20,7 @@ function App() {
   const [path, setPath] = useState(window.location.pathname);
 
   // HR module routes.
-  const HR_PATHS = ['/employee', '/department', '/timelogs', '/holiday', '/shifts', '/shift-assignment', '/users'];
+  const HR_PATHS = ['/employee', '/department', '/timelogs', '/holiday', '/shifts', '/shift-assignment', '/salary', '/payroll', '/users'];
 
   const navigate = (to) => {
     window.history.pushState({}, '', to);
