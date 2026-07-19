@@ -4,11 +4,12 @@ import {
     TableCell, TableContainer, TableHead, TableRow, Dialog, DialogTitle, DialogContent,
     DialogActions, IconButton, Chip, Typography, CircularProgress, MenuItem
 } from '@material-ui/core';
-import { Add, Edit, Delete, RemoveCircle, AddCircle } from '@material-ui/icons';
+import { Add, Edit, Delete, RemoveCircle, AddCircle, PictureAsPdf } from '@material-ui/icons';
 import Select from 'react-select';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
+import { exportProjectConsumables } from './pdfExport';
 
 const axios = require('axios');
 const STATUSES = ['On Going', 'Finished'];
@@ -135,7 +136,10 @@ function ConsumableFormsPage() {
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                 <Typography variant="h6">{selected.ProjectName}</Typography>
-                                <Button variant="contained" color="primary" startIcon={<Add />} onClick={() => setItemOpen(true)}>Add Item</Button>
+                                <div>
+                                    <Button variant="outlined" startIcon={<PictureAsPdf />} style={{ marginRight: 8 }} onClick={() => exportProjectConsumables(selected)}>Export PDF</Button>
+                                    <Button variant="contained" color="primary" startIcon={<Add />} onClick={() => setItemOpen(true)}>Add Item</Button>
+                                </div>
                             </div>
                             <TableContainer style={{ maxHeight: '66vh' }}>
                                 <Table stickyHeader size="small">

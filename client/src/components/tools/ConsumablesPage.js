@@ -4,11 +4,12 @@ import {
     TableHead, TableRow, TablePagination, Dialog, DialogTitle, DialogContent,
     DialogActions, IconButton, Chip, Typography, CircularProgress, MenuItem
 } from '@material-ui/core';
-import { Add, Edit, Delete } from '@material-ui/icons';
+import { Add, Edit, Delete, PictureAsPdf } from '@material-ui/icons';
 import Select from 'react-select';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
+import { exportConsumables } from './pdfExport';
 
 const axios = require('axios');
 const PER_PAGE = 12;
@@ -81,6 +82,12 @@ function ConsumablesPage() {
             .catch(() => setConfirmDel(null));
     };
 
+    const exportPdf = () => {
+        axios.get(apihost + 'inventory/consumables/list-of-all-consumables')
+            .then((r) => exportConsumables(Array.isArray(r.data) ? r.data : []))
+            .catch(() => toast.error('Failed to export.', { position: 'top-center' }));
+    };
+
     const statusChip = (c) => {
         const available = Number(c.Quantity) - Number(c.Used);
         if (available <= 0) return <Chip size="small" label="Out of Stocks" style={{ backgroundColor: '#FEE2E2', color: '#DC2626', fontWeight: 600 }} />;
@@ -96,6 +103,7 @@ function ConsumablesPage() {
                 <Grid item><Button variant="contained" color="primary" startIcon={<Add />} onClick={openAdd}>Add Item</Button></Grid>
                 <Grid item xs><Select isMulti isClearable placeholder="Search items..." options={searchOptions}
                     value={selected} onChange={(v) => setSelected(v || [])} /></Grid>
+                <Grid item><Button variant="outlined" startIcon={<PictureAsPdf />} onClick={exportPdf}>Export PDF</Button></Grid>
             </Grid>
 
             <TableContainer style={{ maxHeight: '68vh' }}>

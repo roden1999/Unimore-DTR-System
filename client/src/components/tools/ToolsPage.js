@@ -4,11 +4,12 @@ import {
     TableHead, TableRow, TablePagination, Dialog, DialogTitle, DialogContent,
     DialogActions, IconButton, Chip, Typography, CircularProgress, MenuItem
 } from '@material-ui/core';
-import { Add, Edit, Delete } from '@material-ui/icons';
+import { Add, Edit, Delete, PictureAsPdf } from '@material-ui/icons';
 import Select from 'react-select';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
+import { exportTools } from './pdfExport';
 
 const axios = require('axios');
 const PER_PAGE = 12;
@@ -90,6 +91,12 @@ function ToolsPage() {
             .catch(() => setConfirmDel(null));
     };
 
+    const exportPdf = () => {
+        axios.get(apihost + 'inventory/tools/list-of-all-tools')
+            .then((r) => exportTools(Array.isArray(r.data) ? r.data : []))
+            .catch(() => toast.error('Failed to export.', { position: 'top-center' }));
+    };
+
     return (
         <Paper style={{ padding: 20, borderRadius: 14 }}>
             <ToastContainer />
@@ -103,6 +110,7 @@ function ToolsPage() {
                     options={CATEGORIES.map((c) => ({ label: c, value: c }))} value={categoryFilter} onChange={setCategoryFilter} /></Grid>
                 <Grid item style={{ minWidth: 160 }}><Select isClearable placeholder="Status"
                     options={STATUSES.map((s) => ({ label: s, value: s }))} value={statusFilter} onChange={setStatusFilter} /></Grid>
+                <Grid item><Button variant="outlined" startIcon={<PictureAsPdf />} onClick={exportPdf}>Export PDF</Button></Grid>
             </Grid>
 
             <TableContainer style={{ maxHeight: '68vh' }}>
