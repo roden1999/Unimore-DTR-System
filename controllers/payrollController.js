@@ -5,6 +5,9 @@ const { computeEmployeeDTR } = require("../utils/dtrCalculator");
 
 const PER_PAGE = 5;
 
+const peso = (n) => "₱" + Number(n || 0).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const num = (n) => Number(n || 0).toFixed(2);
+
 const payrollList = async (request, response) => {
     try {
         const page = request.body.page !== "" ? parseInt(request.body.page) : 0;
@@ -74,6 +77,74 @@ const payrollList = async (request, response) => {
 
             const totalDeduction = sss + phic + hdmf + sssLoan + pagibigLoan + careHealthPlus;
             const totalEarnings = (basic + allowance + amountOt + tmonthPay + amountRestday + amountRestdayOt + amountHoliday + amountHolidayOt + amountSH + amountSHOt) - absensesTardiness;
+            const netPay = (totalEarnings - totalDeduction) > 0 ? (totalEarnings - totalDeduction) : 0;
+
+            // Step-by-step breakdown so HR can see and verify the math.
+            const notThisCutoff = " (not deducted this cut-off)";
+            const computation = [
+                {
+                    title: "Rate Basis (Metal Asia)",
+                    rows: [
+                        { label: "Monthly Salary", detail: "as set in Salary & Deductions", amount: peso(totalMonthly) },
+                        { label: "Basic (capped at ₱373/day)", detail: `min(${peso(totalMonthly)}, ₱373 × 26)`, amount: peso(basicMetalAsia) },
+                        { label: "Allowance", detail: `${peso(totalMonthly)} − ${peso(basicMetalAsia)}`, amount: peso(allowanceMetalAsia) },
+                        { label: `Pay divisor (${payType})`, detail: payType === "Full Month" ? "26 (whole month)" : "13 (half month)", amount: String(monthly) },
+                        { label: "Daily Rate", detail: `(${peso(basicMetalAsia)} + ${peso(allowanceMetalAsia)}) ÷ ${monthly}`, amount: peso(dailyRate) },
+                        { label: "Basic (this cut-off)", detail: payType === "Full Month" ? "full basic" : "basic ÷ 2", amount: peso(basic) },
+                        { label: "Allowance (this cut-off)", detail: payType === "Full Month" ? "full allowance" : "allowance ÷ 2", amount: peso(allowance) },
+                    ],
+                },
+                {
+                    title: "Attendance (from DTR)",
+                    rows: [
+                        { label: "Days Worked", detail: "", amount: totalDays.toFixed(0) },
+                        { label: "Hours Worked", detail: "", amount: num(totalHrsWork) },
+                        { label: "Overtime Hours", detail: "", amount: num(totalOT) },
+                        { label: "Late (hrs)", detail: "", amount: num(totalLate) },
+                        { label: "Undertime (hrs)", detail: "", amount: num(totalUT) },
+                        { label: "Absent (days)", detail: "", amount: String(totalAbsent) },
+                        { label: "Rest Day (hrs)", detail: "", amount: num(totalRestday) },
+                        { label: "Regular Holiday (hrs)", detail: "", amount: num(totalHoliday) },
+                        { label: "Regular Holiday OT (hrs)", detail: "", amount: num(totalHolidayOt) },
+                        { label: "Special Holiday (hrs)", detail: "", amount: num(totalSpecialHoliday) },
+                    ],
+                },
+                {
+                    title: "Earnings",
+                    rows: [
+                        { label: "Basic Pay", detail: "basic for the cut-off", amount: peso(basic) },
+                        { label: "Allowance", detail: "allowance for the cut-off", amount: peso(allowance) },
+                        { label: "Less: Absences / Tardiness", detail: `(${peso(basic)} + ${peso(allowance)}) ÷ ${monthly} × ${totalAbsent} day(s)`, amount: "− " + peso(absensesTardiness) },
+                        { label: "Overtime", detail: `(₱373÷8 × ${num(totalOT)} × 1.25) + (((${peso(totalMonthlyBaseOnType)} − ${peso(basic)}) ÷ ${monthly}) ÷ 8 × ${num(totalOT)})`, amount: peso(amountOt) },
+                        { label: "Rest Day", detail: `(${peso(totalMonthly)} ÷ 26) ÷ 8 × ${num(totalRestday)} × 1.3`, amount: peso(amountRestday) },
+                        { label: "Rest Day OT", detail: `₱373÷8 × ${num(totalRestdayOt)} × 1.69 + …`, amount: peso(amountRestdayOt) },
+                        { label: "Regular Holiday", detail: `(${peso(totalMonthly)} ÷ 26) ÷ 8 × ${num(totalHoliday)} × 2 ÷ 2`, amount: peso(amountHoliday) },
+                        { label: "Regular Holiday OT", detail: `₱373÷8 × ${num(totalHolidayOt)} × 2.6 + …`, amount: peso(amountHolidayOt) },
+                        { label: "Special Holiday", detail: `(${peso(basicMetalAsia)} ÷ 26) ÷ 8 × ${num(totalSpecialHoliday)} × 0.3`, amount: peso(amountSH) },
+                        { label: "Special Holiday OT", detail: `₱373÷8 × ${num(totalSpecialHolidayOt)} × 1.69 + …`, amount: peso(amountSHOt) },
+                        { label: "13th-Month Accrual", detail: `(${peso(basic)} + ${peso(allowance)} − ${peso(absensesTardiness)}) ÷ 12`, amount: peso(tmonthPay) },
+                        { label: "TOTAL EARNINGS", detail: "sum of earnings, less absences/tardiness", amount: peso(totalEarnings), strong: true },
+                    ],
+                },
+                {
+                    title: "Deductions",
+                    rows: [
+                        { label: "SSS", detail: payType === "1st Half" ? notThisCutoff : "", amount: peso(sss) },
+                        { label: "PhilHealth", detail: payType === "1st Half" ? notThisCutoff : "", amount: peso(phic) },
+                        { label: "Pag-IBIG (HDMF)", detail: payType === "1st Half" ? notThisCutoff : "", amount: peso(hdmf) },
+                        { label: "SSS Loan", detail: payType === "2nd Half" ? notThisCutoff : "", amount: peso(sssLoan) },
+                        { label: "Pag-IBIG Loan", detail: payType === "2nd Half" ? notThisCutoff : "", amount: peso(pagibigLoan) },
+                        { label: "Care Health Plus", detail: payType === "2nd Half" ? notThisCutoff : "", amount: peso(careHealthPlus) },
+                        { label: "TOTAL DEDUCTIONS", detail: "SSS + PhilHealth + Pag-IBIG + loans + Care Health Plus", amount: peso(totalDeduction), strong: true },
+                    ],
+                },
+                {
+                    title: "Net Pay",
+                    rows: [
+                        { label: "NET PAY", detail: `${peso(totalEarnings)} − ${peso(totalDeduction)}`, amount: peso(netPay), strong: true },
+                    ],
+                },
+            ];
 
             data.push({
                 _id: emp.Id,
@@ -135,6 +206,7 @@ const payrollList = async (request, response) => {
                 grossSalary: (netOfTardiness + amountOt).toFixed(2),
                 tMonthPayMetalAsia: tmonthPayMetalAsia > 0 ? tmonthPayMetalAsia.toFixed(2) : "0.00",
                 netPayMetalAsia: (totalEarnings - totalDeduction) > 0 ? (totalEarnings - totalDeduction).toFixed(2) : "0.00",
+                computation,
             });
         }
 
