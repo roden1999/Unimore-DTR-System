@@ -144,7 +144,7 @@ function Main(props) {
     const drawer = (
         <div>
             <div className={classes.toolbar} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <img src="unimore-logo-landscape.png" width='190' height='56' alt="" className={classes.logo} />
+                <img src="/unimore-logo-landscape.png" width='190' height='56' alt="" className={classes.logo} />
             </div>
 
             <Divider />
