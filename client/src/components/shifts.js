@@ -43,12 +43,14 @@ function Shifts() {
     };
 
     const handleAdd = () => {
+        var route = "shifts/";
+        var url = window.apihost + route;
         const data = {
             name,
             timeStart: moment(timeStart).format("h:mm a"),
             timeEnd: moment(timeEnd).format("h:mm a"),
         };
-        axios.post(window.apihost + "shifts/", data)
+        axios.post(url, data)
             .then((res) => {
                 toast.success((res.data.shift || "Shift") + " saved.", { position: "top-center" });
                 setOpen(false);
