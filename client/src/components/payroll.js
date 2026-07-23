@@ -17,7 +17,6 @@ import TablePagination from '@material-ui/core/TablePagination';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import TableRow from '@material-ui/core/TableRow';
 import Button from '@material-ui/core/Button';
-import Chip from '@material-ui/core/Chip';
 import Input from '@material-ui/core/Input';
 import Modal from '@material-ui/core/Modal';
 import Dialog from '@material-ui/core/Dialog';
@@ -45,6 +44,75 @@ import pdfMake from 'pdfmake/build/pdfmake.js';
 import pdfFonts from 'pdfmake/build/vfs_fonts.js';
 
 pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
+// ---- Payslip presentation helpers ----
+const peso = (v) => Number(String(v == null ? 0 : v).replace(/,/g, '')).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const nz = (rows) => rows.filter((r) => Number(String(r.v).replace(/,/g, '')) !== 0);
+
+const PayTable = ({ title, headColor, rows, total, totalLabel }) => (
+    <div style={{ border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ background: headColor, color: '#fff', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14 }}>
+            <span>{title}</span><span>Amount</span>
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <tbody>
+                {rows.length === 0 && <tr><td style={{ padding: '8px 12px', color: '#94A3B8' }}>None</td></tr>}
+                {rows.map((r, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '6px 12px', fontSize: 13 }}>{r.k}</td>
+                        <td style={{ padding: '6px 12px', textAlign: 'right', fontSize: 13, whiteSpace: 'nowrap' }}>₱{peso(r.v)}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#F9FAFB', fontWeight: 700, fontSize: 14 }}>
+            <span>{totalLabel}</span><span>₱{peso(total)}</span>
+        </div>
+    </div>
+);
+
+const PayslipBody = ({ x }) => {
+    const e = (x.earnings && x.earnings[0]) || {};
+    const d = (x.deductions && x.deductions[0]) || {};
+    const earnRows = [{ k: 'Basic', v: e.basic }].concat(nz([
+        { k: 'Allowance', v: e.allowance },
+        { k: 'Overtime', v: e.overtime },
+        { k: 'Rest Day', v: e.restday },
+        { k: 'Rest Day OT', v: e.restdayOT },
+        { k: 'Regular Holiday', v: e.holiday },
+        { k: 'Regular Holiday OT', v: e.holidayOT },
+        { k: 'Special Holiday', v: e.sh },
+        { k: 'Special Holiday OT', v: e.shOt },
+        { k: 'Reg. Holiday Rest Day', v: e.holidayRestday },
+        { k: 'Reg. Holiday Rest Day OT', v: e.holidayRestdayOT },
+        { k: 'Spec. Holiday Rest Day', v: e.specialHolidayRestday },
+        { k: 'Spec. Holiday Rest Day OT', v: e.specialHolidayRestdayOT },
+        { k: '13th Month', v: e.tMonthPay },
+    ]));
+    if (Number(String(e.absensesTardiness).replace(/,/g, '')) !== 0) {
+        earnRows.push({ k: 'Less: Absences / Tardiness', v: '-' + e.absensesTardiness });
+    }
+    const dedRows = nz([
+        { k: 'SSS', v: d.sss },
+        { k: 'PhilHealth', v: d.phic },
+        { k: 'Pag-IBIG (HDMF)', v: d.hdmf },
+        { k: 'SSS Loan', v: d.sssLoan },
+        { k: 'Pag-IBIG Loan', v: d.pagibigLoan },
+        { k: 'Care Health Plus', v: d.careHealthPlus },
+        { k: 'Cash Advance', v: d.cashAdvance },
+        { k: 'Safety Shoes', v: d.safetyShoes },
+    ]);
+    return (
+        <Grid container spacing={2} style={{ marginTop: 4 }}>
+            <Grid item xs={12} md={6}>
+                <PayTable title="Earnings" headColor="#16A34A" rows={earnRows} total={x.totalEarnings} totalLabel="Total Earnings" />
+            </Grid>
+            <Grid item xs={12} md={6}>
+                <PayTable title="Deductions" headColor="#DC2626" rows={dedRows} total={x.totalDeduction} totalLabel="Total Deductions" />
+            </Grid>
+        </Grid>
+    );
+};
 
 const axios = require("axios");
 const moment = require("moment");
@@ -1022,109 +1090,12 @@ const Payroll = () => {
                                         {x.department}
                                     </Typography>
 
-                                    <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 10, height: '100%', minHeight: '43vh', maxHeight: '43vh', overFlowY: 'auto' }}>
-                                        <Grid container spacing={3}>
-                                            {x.earnings.map(i =>
-                                                <Grid item xs={6}>
-                                                    <Chip
-                                                        label={<Typography style={{ fontSize: 21, textAlign: 'center' }}><b>Earnings</b></Typography>}
-                                                        color="default"
-                                                        style={{ display: 'flex', justifyContent: 'flex-center', backgroundColor: '#1BFF00' }}
-                                                    />
-
-                                                    <Grid container spacing={3}>
-                                                        <Grid item xs={6}>
-                                                            <Typography style={{ fontSize: 16 }}><b>Basic: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Absenses/Tardiness: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Allowance: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Overtime: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Rest Day: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Rest Day OT: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Regular Holiday: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Regular Holiday OT: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Special Holiday: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Special Holiday OT: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Regular Holiday Rest Day: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Regular Holiday Rest Day OT: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Special Holiday Rest Day: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Special Holiday Rest Day OT: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>13th Month: </b></Typography>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.basic.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.absensesTardiness.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.allowance.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.overtime.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.restday.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.restdayOT.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.holiday.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.holidayOT.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.sh.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.shOt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.holidayRestday.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.holidayRestdayOT.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.specialHolidayRestday.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.specialHolidayRestdayOT.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{i.tMonthPay.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                        </Grid>
-                                                    </Grid>
-
-                                                    <br />
-                                                    <Typography style={{ fontSize: 18 }}><b>Total Earnings: {x.totalEarnings.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                </Grid>
-                                            )}
-                                            {x.deductions.map(j =>
-                                                <Grid item xs={6}>
-                                                    <Chip
-                                                        label={<Typography style={{ fontSize: 21, textAlign: 'center' }}><b>Deductions</b></Typography>}
-                                                        color="default"
-                                                        style={{ display: 'flex', justifyContent: 'flex-center', backgroundColor: '#E60C0C' }}
-                                                    />
-
-                                                    <Grid container spacing={3}>
-                                                        <Grid item xs={4}>
-                                                            <Typography style={{ fontSize: 16 }}><b>SSS: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>PHIC: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>HDMF: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Cash Advance: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Safety Shoes: </b></Typography>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.sss.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.phic.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.hdmf.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.cashAdvance.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.safetyShoes.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                        </Grid>
-                                                    </Grid>
-
-                                                    <br />
-
-                                                    <Typography style={{ fontSize: 21, textAlign: 'left' }}><b>Other Deductions</b></Typography>
-                                                    <Grid container spacing={3}>
-                                                        <Grid item xs={4}>
-                                                            <Typography style={{ fontSize: 16 }}><b>SSS Loan: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>PAG-IBIG Loan: </b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>Care Health Plus: </b></Typography>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.sssLoan.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.pagibigLoan.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                            <Typography style={{ fontSize: 16 }}><b>{j.careHealthPlus.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                        </Grid>
-                                                    </Grid>
-
-                                                    <br /><br />
-                                                    <Typography style={{ fontSize: 18 }}><b>Total Deductions: {x.totalDeduction.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
-                                                </Grid>
-                                            )}
-                                        </Grid>
-                                    </div>
+                                    <PayslipBody x={x} />
                                 </CardContent>
 
                                 <CardActions>
                                     <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-                                        <Typography style={{ fontSize: 20, }}><b>Net Pay: {x.netPayMetalAsia.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</b></Typography>
+                                        <div style={{ background: 'linear-gradient(90deg,#4F73FF,#4BC0C8)', color: '#fff', padding: '10px 18px', borderRadius: 10, fontWeight: 700, fontSize: 18 }}>Net Pay: ₱{peso(x.netPayMetalAsia)}</div>
                                     </div>
                                 </CardActions>
                             </Card>
