@@ -20,6 +20,10 @@ import Button from '@material-ui/core/Button';
 import Chip from '@material-ui/core/Chip';
 import Input from '@material-ui/core/Input';
 import Modal from '@material-ui/core/Modal';
+import Dialog from '@material-ui/core/Dialog';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogActions from '@material-ui/core/DialogActions';
 import Backdrop from '@material-ui/core/Backdrop';
 import DateFnsUtils from '@date-io/date-fns';
 import {
@@ -27,7 +31,7 @@ import {
     KeyboardTimePicker,
     KeyboardDatePicker,
 } from '@material-ui/pickers';
-import { Save, Edit, Delete, Add, PictureAsPdf, Print } from '@material-ui/icons/';
+import { Save, Edit, Delete, Add, PictureAsPdf, Print, Visibility } from '@material-ui/icons/';
 import { useSpring, animated } from 'react-spring';
 import Select from 'react-select';
 import { ToastContainer, toast } from 'react-toastify';
@@ -214,6 +218,7 @@ const Payroll = () => {
     const [employeeOptions, setEmployeeOptions] = useState(null);
     const [departmentOptions, setDepartmentOptions] = useState(null);
     const [addModal, setAddModal] = useState(false);
+    const [compModal, setCompModal] = useState(null);
     const [selectedEmployee, setSelectedEmployee] = useState(payrollemp.emp);
     const [selectedDepartment, setSelectedDepartment] = useState(payrolldept.dept);
     const [selectedType, setSelectedType] = useState({ label: "Full Month", value: "Full Month" });
@@ -298,7 +303,8 @@ const Payroll = () => {
             totalAbsensesTardiness: x.totalAbsensesTardiness,
 
             tMonthPayMetalAsia: x.tMonthPayMetalAsia,
-            netPayMetalAsia: x.netPayMetalAsia
+            netPayMetalAsia: x.netPayMetalAsia,
+            computation: x.computation,
         }))
         : [];
 
@@ -995,6 +1001,14 @@ const Payroll = () => {
                                         startIcon={<Print />}
                                         onClick={() => exportToPDF(x)}>Print Payslip</Button>
 
+                                    <Button
+                                        size="small"
+                                        style={{ float: 'right', marginRight: 8 }}
+                                        variant="outlined"
+                                        color="primary"
+                                        startIcon={<Visibility />}
+                                        onClick={() => setCompModal(x)}>View Computation</Button>
+
                                     <Typography style={{ fontSize: 14 }} color="textSecondary" gutterBottom>
                                         {x.employeeNo}
                                     </Typography>
@@ -1142,6 +1156,45 @@ const Payroll = () => {
                 // onChangeRowsPerPage={handleChangeRowsPerPage}
                 />
             }
+
+            <Dialog open={Boolean(compModal)} onClose={() => setCompModal(null)} maxWidth="md" fullWidth>
+                <DialogTitle>
+                    Computation Breakdown
+                    {compModal &&
+                        <div style={{ fontSize: 13, color: '#6B7280', fontWeight: 400 }}>
+                            {compModal.employeeName} — {compModal.employeeNo}
+                        </div>}
+                </DialogTitle>
+                <DialogContent dividers>
+                    <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>
+                        This shows exactly how each figure on the payslip was derived (Unimore / Metal Asia formula).
+                        Use it to verify the numbers against attendance and the employee's salary setup.
+                    </div>
+                    {compModal && compModal.computation && compModal.computation.map((section, si) => (
+                        <div key={si} style={{ marginBottom: 18 }}>
+                            <div style={{ fontWeight: 700, color: '#3454D1', borderBottom: '2px solid #EEF1F6', paddingBottom: 4, marginBottom: 6 }}>
+                                {section.title}
+                            </div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <tbody>
+                                    {section.rows.map((row, ri) => (
+                                        <tr key={ri} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                                            <td style={{ padding: '6px 8px', width: '32%', fontWeight: row.strong ? 700 : 500, verticalAlign: 'top' }}>{row.label}</td>
+                                            <td style={{ padding: '6px 8px', color: '#6B7280', fontSize: 12, verticalAlign: 'top' }}>{row.detail}</td>
+                                            <td style={{ padding: '6px 8px', width: '20%', textAlign: 'right', fontWeight: row.strong ? 700 : 500, whiteSpace: 'nowrap' }}>{row.amount}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ))}
+                    {compModal && !compModal.computation &&
+                        <div style={{ color: '#9CA3AF' }}>No computation details available for this record.</div>}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setCompModal(null)} variant="contained" color="primary">Close</Button>
+                </DialogActions>
+            </Dialog>
         </div >
     );
 }

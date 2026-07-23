@@ -26,6 +26,7 @@ app.use("/department", require("./routes/departmentRoutes"));
 app.use("/timelogs", require("./routes/timelogRoutes"));
 app.use("/shifts", require("./routes/shiftRoutes"));
 app.use("/shift-overrides", require("./routes/shiftOverrideRoutes"));
+app.use("/inventory", require("./routes/inventoryRoutes"));
 
 // SPA fallback: any non-API GET returns the client so client-side
 // routes (/employee, /department, ...) survive a refresh / deep link.

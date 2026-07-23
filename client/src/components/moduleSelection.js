@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme) => ({
     cardDesc: { color: '#7A7A7A', marginTop: 8, fontSize: 13 },
 }));
 
-function ModuleSelection({ onSelectHR }) {
+function ModuleSelection({ onSelectHR, onSelectTools }) {
     const classes = useStyles();
     const { setUserData } = useContext(UserContext);
 
@@ -121,12 +121,12 @@ function ModuleSelection({ onSelectHR }) {
                 </Card>
 
                 <Card className={classes.card}>
-                    <CardActionArea className={classes.cardArea} onClick={() => setUnderConstruction(true)}>
+                    <CardActionArea className={classes.cardArea} onClick={() => (onSelectTools ? onSelectTools() : setUnderConstruction(true))}>
                         <CardContent style={{ textAlign: 'center' }}>
                             <Build className={`${classes.icon} ${classes.toolIcon}`} />
                             <Typography variant="h6" className={classes.cardTitle}>Tools &amp; Consumables Inventory</Typography>
                             <Typography className={classes.cardDesc}>
-                                Track tools and consumable materials
+                                Tools, consumables, spare parts, borrowing &amp; project forms
                             </Typography>
                         </CardContent>
                     </CardActionArea>
