@@ -1,21 +1,18 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
-    AppBar, CssBaseline, Divider, Drawer, IconButton, Menu, MenuItem,
-    List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography,
-    Hidden, Tooltip, Avatar, Badge
+    AppBar, CssBaseline, Divider, Drawer, IconButton, Menu, MenuItem, List, ListItem,
+    ListItemIcon, ListItemText, Collapse, Toolbar, Typography, Hidden, Tooltip, Avatar,
+    Badge, Fab
 } from '@material-ui/core';
 import {
-    Build, Category, SwapHoriz, Assignment, Description,
-    AccountCircle, Home
+    Receipt, ExpandLess, ExpandMore, NoteAdd, ListAlt, AccountCircle, Home, Dialpad
 } from '@material-ui/icons';
 import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
 
-import ToolsPage from './ToolsPage';
-import ConsumablesPage from './ConsumablesPage';
-import RecordsPage from './RecordsPage';
-import ToolFormsPage from './ToolFormsPage';
-import ConsumableFormsPage from './ConsumableFormsPage';
+import CreateDR from './CreateDR';
+import DRList from './DRList';
+import FloatingCalculator from './FloatingCalculator';
 import UserContext from '../context/userContext';
 
 const drawerWidth = 240;
@@ -27,36 +24,26 @@ const useStyles = makeStyles((theme) => ({
     menuButton: { marginRight: theme.spacing(2) },
     drawerPaper: { width: drawerWidth, backgroundColor: '#FFFFFF' },
     toolbar: theme.mixins.toolbar,
-    content: {
-        flexGrow: 1, padding: theme.spacing(3), backgroundColor: '#F4F6FB',
-        minHeight: '100vh', marginLeft: 0, transition: 'margin .3s',
-    },
+    content: { flexGrow: 1, padding: theme.spacing(3), backgroundColor: '#F4F6FB', minHeight: '100vh', marginLeft: 0, transition: 'margin .3s' },
     contentShift: { marginLeft: drawerWidth },
-    navItem: {
-        margin: '4px 12px', borderRadius: 10, color: '#4B5563',
-        '& .MuiListItemIcon-root': { minWidth: 40, color: '#6B7280' },
-    },
+    navItem: { margin: '4px 12px', borderRadius: 10, color: '#4B5563', '& .MuiListItemIcon-root': { minWidth: 40, color: '#6B7280' } },
+    subItem: { paddingLeft: 40, margin: '2px 12px', borderRadius: 10, color: '#4B5563' },
     navItemActive: {
-        backgroundColor: 'rgba(6,182,212,0.12)', color: '#0E7490',
-        '& .MuiListItemIcon-root': { color: '#06B6D4' },
+        backgroundColor: 'rgba(245,158,11,0.14)', color: '#B45309',
+        '& .MuiListItemIcon-root': { color: '#F59E0B' },
         '& .MuiListItemText-primary': { fontWeight: 600 },
     },
-    userAvatar: {
-        width: 34, height: 34, backgroundColor: 'rgba(255,255,255,0.25)',
-        color: '#fff', fontSize: 15, fontWeight: 600,
-    },
+    userAvatar: { width: 34, height: 34, backgroundColor: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 15, fontWeight: 600 },
     customBadge: { backgroundColor: '#1AEC02', color: 'white' },
+    calcFab: { position: 'fixed', bottom: 24, right: 24, zIndex: 1200 },
 }));
 
 const PATH_TO_PAGE = {
-    '/tools/tools': 'Tools',
-    '/tools/consumables': 'Consumables',
-    '/tools/records': 'Borrowed / Returned',
-    '/tools/tool-forms': 'Tool Forms',
-    '/tools/consumable-forms': 'Consumable Forms',
+    '/production/create-dr': 'Create DR',
+    '/production/dr-list': 'DR List',
 };
 
-function ToolsModule({ path, navigate, onExitModule }) {
+function ProductionModule({ path, navigate, onExitModule }) {
     const classes = useStyles();
     const { setUserData } = useContext(UserContext);
 
@@ -65,8 +52,10 @@ function ToolsModule({ path, navigate, onExitModule }) {
     const [name, setName] = useState('');
     const [role, setRole] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
+    const [drOpen, setDrOpen] = useState(true);
+    const [calcOpen, setCalcOpen] = useState(false);
 
-    const pageName = PATH_TO_PAGE[path] || 'Tools';
+    const pageName = PATH_TO_PAGE[path] || 'Create DR';
 
     useEffect(() => {
         const user = JSON.parse(sessionStorage.getItem('user'));
@@ -78,13 +67,7 @@ function ToolsModule({ path, navigate, onExitModule }) {
     const go = (to) => { navigate(to); if (safeWindow < 960) setMobileOpen(false); };
     const logOut = () => { setUserData({ token: undefined, user: undefined }); sessionStorage.clear(); };
 
-    const navItems = [
-        { label: 'Tools', path: '/tools/tools', icon: <Build /> },
-        { label: 'Consumables', path: '/tools/consumables', icon: <Category /> },
-        { label: 'Borrowed / Returned', path: '/tools/records', icon: <SwapHoriz /> },
-        { label: 'Tool Forms', path: '/tools/tool-forms', icon: <Assignment /> },
-        { label: 'Consumable Forms', path: '/tools/consumable-forms', icon: <Description /> },
-    ];
+    const subActive = (p) => `${classes.subItem} ${path === p ? classes.navItemActive : ''}`;
 
     const drawer = (
         <div>
@@ -93,16 +76,26 @@ function ToolsModule({ path, navigate, onExitModule }) {
             </div>
             <Divider />
             <Typography variant="caption" style={{ padding: '16px 20px 4px', display: 'block', color: '#9CA3AF', letterSpacing: 1 }}>
-                INVENTORY
+                PRODUCTION
             </Typography>
             <List>
-                {navItems.map((item) => (
-                    <ListItem button key={item.label} onClick={() => go(item.path)}
-                        className={`${classes.navItem} ${path === item.path ? classes.navItemActive : ''}`}>
-                        <ListItemIcon>{item.icon}</ListItemIcon>
-                        <ListItemText primary={item.label} />
-                    </ListItem>
-                ))}
+                <ListItem button className={classes.navItem} onClick={() => setDrOpen((o) => !o)}>
+                    <ListItemIcon><Receipt /></ListItemIcon>
+                    <ListItemText primary="Daily Receipt" />
+                    {drOpen ? <ExpandLess /> : <ExpandMore />}
+                </ListItem>
+                <Collapse in={drOpen} timeout="auto" unmountOnExit>
+                    <List disablePadding>
+                        <ListItem button className={subActive('/production/create-dr')} onClick={() => go('/production/create-dr')}>
+                            <ListItemIcon><NoteAdd /></ListItemIcon>
+                            <ListItemText primary="Create DR" />
+                        </ListItem>
+                        <ListItem button className={subActive('/production/dr-list')} onClick={() => go('/production/dr-list')}>
+                            <ListItemIcon><ListAlt /></ListItemIcon>
+                            <ListItemText primary="DR List" />
+                        </ListItem>
+                    </List>
+                </Collapse>
             </List>
         </div>
     );
@@ -147,14 +140,20 @@ function ToolsModule({ path, navigate, onExitModule }) {
 
             <main className={`${classes.content} ${drawerOpen ? classes.contentShift : ''}`}>
                 <div className={classes.toolbar} />
-                {pageName === 'Tools' && <ToolsPage />}
-                {pageName === 'Consumables' && <ConsumablesPage />}
-                {pageName === 'Borrowed / Returned' && <RecordsPage />}
-                {pageName === 'Tool Forms' && <ToolFormsPage />}
-                {pageName === 'Consumable Forms' && <ConsumableFormsPage />}
+                {pageName === 'Create DR' && <CreateDR />}
+                {pageName === 'DR List' && <DRList />}
             </main>
+
+            {/* Floating calculator — persists while inside Production */}
+            {!calcOpen &&
+                <Tooltip title="Calculator">
+                    <Fab color="primary" size="medium" className={classes.calcFab} onClick={() => setCalcOpen(true)}>
+                        <Dialpad />
+                    </Fab>
+                </Tooltip>}
+            {calcOpen && <FloatingCalculator onClose={() => setCalcOpen(false)} />}
         </div>
     );
 }
 
-export default ToolsModule;
+export default ProductionModule;

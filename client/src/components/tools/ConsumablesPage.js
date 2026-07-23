@@ -5,7 +5,7 @@ import {
     DialogActions, IconButton, Chip, Typography, CircularProgress, MenuItem
 } from '@material-ui/core';
 import { Add, Edit, Delete, PictureAsPdf } from '@material-ui/icons';
-import Select from 'react-select';
+import Select from '../common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';

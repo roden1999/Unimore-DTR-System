@@ -1,879 +1,178 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import CardActions from '@material-ui/core/CardActions';
-import CardActionArea from '@material-ui/core/CardActionArea';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Divider from '@material-ui/core/Divider';
-import Modal from '@material-ui/core/Modal';
-import Button from '@material-ui/core/Button';
-import { Save, Edit, Delete, Add } from '@material-ui/icons/';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles, useTheme } from '@material-ui/core/styles';
-import { useSpring, animated } from 'react-spring';
-import Select from 'react-select';
+import {
+    Paper, Grid, Button, TextField, InputAdornment, Table, TableBody, TableCell,
+    TableContainer, TableHead, TableRow, Avatar, Chip, IconButton, Dialog, DialogTitle,
+    DialogContent, DialogActions, Typography, CircularProgress, MenuItem, Tooltip
+} from '@material-ui/core';
+import { PersonAdd, Edit, Delete, VpnKey, Search } from '@material-ui/icons';
 import { ToastContainer, toast } from 'react-toastify';
-import { TextField } from '@material-ui/core';
-import Backdrop from '@material-ui/core/Backdrop';
 import 'react-toastify/dist/ReactToastify.css';
-const axios = require("axios");
 
-const customMultiSelectStyle = {
-    clearIndicator: (ci) => ({
-        ...ci
-        // backgroundColor: '#383f48',
-    }),
-    dropdownIndicator: (ci) => ({
-        ...ci
-        // backgroundColor: "#383f48"
-    }),
-    indicatorsContainer: (ci) => ({
-        ...ci,
-        color: "red",
-        // backgroundColor: "#383f48",
-        position: "sticky",
-        top: 0,
-        height: "40px",
-        zIndex: "100"
-    }),
-    control: (base) => ({
-        ...base,
-        height: 40,
-        minHeight: 40,
-        overflowX: "hidden",
-        overflowY: "auto",
-        borderRadiusTopRight: 0,
-        borderRadiusBottomRight: 0,
-        width: "100%"
-        // backgroundColor: '#383f48',
-    }),
-    option: (provided, state) => ({
-        ...provided,
-        color: state.isSelected ? 'white' : 'black',
-        padding: 20,
-        zIndex: 1000
-    }),
-    singleValue: base => ({
-        ...base,
-        // color: "#fff"
-    }),
-    multiValue: (styles, { data }) => {
-        return {
-            ...styles,
-            backgroundColor: "#1E8EFF",
-        };
-    },
-    multiValueLabel: (styles, { data }) => ({
-        ...styles,
-        color: "#00000",
-    }),
-    input: base => ({
-        ...base,
-        // color: "#fff"
-    }),
-    menu: (provided) => ({ ...provided, zIndex: 9999 }),
+const axios = require('axios');
+const ROLES = ['Administrator', 'HR', 'HR Staff', 'Device Manager'];
+
+const roleColor = (r) => {
+    switch (r) {
+        case 'Administrator': return { bg: '#EDE9FE', fg: '#6D28D9' };
+        case 'HR': return { bg: '#DBEAFE', fg: '#1D4ED8' };
+        case 'HR Staff': return { bg: '#DCFCE7', fg: '#15803D' };
+        default: return { bg: '#FEF3C7', fg: '#B45309' };
+    }
 };
 
-const customSelectStyle = {
-    control: base => ({
-        ...base,
-        height: 40,
-        minHeight: 40,
-        borderRadiusTopRight: 0,
-        borderRadiusBottomRight: 0,
-        // backgroundColor: '#383f48',
-    }),
-    option: (provided, state) => ({
-        ...provided,
-        // color: state.isSelected ? 'white' : 'black',
-        padding: 20,
-        zIndex: 1000
-    }),
-    singleValue: base => ({
-        ...base,
-        // color: "#fff"
-    }),
-    input: base => ({
-        ...base,
-        // color: "#fff"
-    }),
-    menu: (provided) => ({ ...provided, zIndex: 9999 }),
-};
+function User() {
+    const apihost = window.apihost;
+    const [users, setUsers] = useState([]);
+    const [loader, setLoader] = useState(false);
+    const [reload, setReload] = useState(false);
+    const [search, setSearch] = useState('');
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        flexGrow: 1,
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 10,
-        height: '100%',
-        minHeight: '90vh',
-        maxHeight: '90vh'
-    },
-    paper: {
-        padding: theme.spacing(2),
-        textAlign: 'center',
-        color: theme.palette.text.secondary,
-    },
-    modal: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    modalPaper: {
-        backgroundColor: theme.palette.background.paper,
-        border: '2px solid #000',
-        boxShadow: theme.shadows[5],
-        padding: theme.spacing(2, 4, 3),
-    },
-}));
-
-const Fade = React.forwardRef(function Fade(props, ref) {
-    const { in: open, children, onEnter, onExited, ...other } = props;
-    const style = useSpring({
-        from: { opacity: 0 },
-        to: { opacity: open ? 1 : 0 },
-        onStart: () => {
-            if (open && onEnter) {
-                onEnter();
-            }
-        },
-        onRest: () => {
-            if (!open && onExited) {
-                onExited();
-            }
-        },
-    });
-
-    return (
-        <animated.div ref={ref} style={style} {...other}>
-            {children}
-        </animated.div>
-    );
-});
-
-const Users = () => {
-    const classes = useStyles();
-    const [usersData, setUsersData] = useState(null);
-    const [selectedUser, setSelectedUser] = useState([]);
-    const [userOptions, setUserOptions] = useState([]);
-    const [loader, setLoader] = useState(true);
-    const [addModal, setAddModal] = useState(false);
-    const [editModal, setEditModal] = useState(false);
-    const [changePassModal, setChangePassModal] = useState(false);
-    const [id, setId] = useState(-1);
-    const [userName, setUserName] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [name, setName] = useState('');
-    const [role, setRole] = useState([]);
-    const [deletePopup, setDeletePopup] = useState(false);
+    const [open, setOpen] = useState(false);
+    const [editId, setEditId] = useState(null);
+    const [form, setForm] = useState({ role: 'HR Staff' });
+    const [pwId, setPwId] = useState(null);
+    const [pw, setPw] = useState({});
+    const [confirmDel, setConfirmDel] = useState(null);
 
     useEffect(() => {
-        var data = selectedUser;
-        var route = "users/list";
-        var url = window.apihost + route;
-        var token = sessionStorage.getItem("auth-token");
-
-        axios
-            .post(url, data, {
-                headers: { "auth-token": token },
-            })
-            .then(function (response) {
-                // handle success
-                if (Array.isArray(response.data)) {
-                    setUsersData(response.data);
-                    setLoader(false);
-                } else {
-                    var obj = [];
-                    obj.push(response.data);
-                    setUsersData(obj);
-                    setLoader(false);
-                }
-            })
-            .catch(function (error) {
-                // handle error
-                console.log(error);
-                setLoader(false);
-            })
-            .finally(function () {
-                // always executed
-            });
-    }, [selectedUser]);
-
-    const usersList = usersData
-        ? usersData.map((x) => ({
-            id: x._id,
-            userName: x.UserName,
-            name: x.Name,
-            role: x.Role,
-        }))
-        : [];
-
-    useEffect(() => {
-        var route = "users/search-options";
-        var url = window.apihost + route;
-        var token = sessionStorage.getItem("auth-token");
-
-        axios
-            .get(url, {
-                headers: { "auth-token": token },
-            })
-            .then(function (response) {
-                // handle success
-                if (Array.isArray(response.data)) {
-                    setUserOptions(response.data);
-                } else {
-                    var obj = [];
-                    obj.push(response.data);
-                    setUserOptions(obj);
-                }
-            })
-            .catch(function (error) {
-                // handle error
-                console.log(error);
-            })
-            .finally(function () {
-                // always executed
-            });
-    }, [loader]);
-
-    const usersOptionsList = userOptions
-        ? userOptions.map((x) => ({
-            id: x._id,
-            userName: x.UserName,
-        }))
-        : [];
-
-    function UsersOption(item) {
-        var list = [];
-        if (item !== undefined || item !== null) {
-            item.map((x) => {
-                var name = x.userName;
-                return list.push({
-                    label: name,
-                    value: x.id,
-                });
-            });
-        }
-        return list;
-    }
-
-    function RoleOption() {
-        var list = [];
-        var item = [
-            { role: "Administrator", key: "Administrator" },
-            { role: "HR", key: "HR" },
-            { role: "HR Staff", key: "HR Staff" },
-            { role: "Device Manager", key: "Device Manager" }
-        ]
-        if (item !== undefined || item !== null) {
-            item.map((x) => {
-                return list.push({
-                    label: x.role,
-                    value: x.key,
-                });
-            });
-        }
-        return list;
-    }
-
-    const handleAddUser = () => {
-        var route = "users/";
-        var url = window.apihost + route;
-        // var token = sessionStorage.getItem("auth-token");
-
-        var data = {
-            userName: userName,
-            password: password,
-            confirmPassword: confirmPassword,
-            name: name,
-            role: Object.keys(role).length > 0 ? role.value : ''
-        }
-
         setLoader(true);
-        axios
-            .post(url, data)
-            .then(function (response) {
-                // handle success
-                toast.success(response.data.user + ' successfully saved.', {
-                    position: "top-center"
-                });
-                setAddModal(false);
-                setLoader(false);
-                setId(-1);
-                setUserName('');
-                setPassword('');
-                setConfirmPassword('');
-                setName('');
-                setRole('');
-            })
-            .catch(function (error) {
-                // handle error
-                toast.error(error.response.data, {
-                    position: "top-center"
-                });
-                setLoader(false);
-            })
-            .finally(function () {
-                // always executed
-            });
-    }
+        axios.post(apihost + 'users/list', {})
+            .then((r) => setUsers(Array.isArray(r.data) ? r.data : []))
+            .catch(() => setUsers([]))
+            .finally(() => setLoader(false));
+    }, [reload]);
 
+    const list = users
+        .map((x) => ({ id: x._id, userName: x.UserName, name: x.Name, role: x.Role }))
+        .filter((u) => !search || (u.name + u.userName).toLowerCase().includes(search.toLowerCase()));
 
-    const handlCloseAddModal = () => {
-        setAddModal(false);
-        setId(-1);
-        setUserName("");
-        setPassword("");
-        setConfirmPassword("");
-        setName("");
-        setRole("");
-    }
+    const setF = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-    const handleEditUser = () => {
-        var route = `users/${id}`;
-        var url = window.apihost + route;
-        // var token = sessionStorage.getItem("auth-token");
+    const openAdd = () => { setEditId(null); setForm({ role: 'HR Staff' }); setOpen(true); };
+    const openEdit = (u) => { setEditId(u.id); setForm({ userName: u.userName, name: u.name, role: u.role }); setOpen(true); };
 
-        var data = {
-            UserName: userName,
-            Name: name,
-            Role: Object.keys(role).length > 0 ? role.value : ''
+    const save = () => {
+        const done = () => { setOpen(false); setReload((r) => !r); };
+        const err = (e) => toast.error(typeof e.response?.data === 'string' ? e.response.data : 'Error', { position: 'top-center' });
+        if (editId) {
+            axios.put(apihost + 'users/' + editId, { userName: form.userName, name: form.name, role: form.role })
+                .then(() => { toast.success('User updated.', { position: 'top-center' }); done(); }).catch(err);
+        } else {
+            axios.post(apihost + 'users/', {
+                userName: form.userName, name: form.name, role: form.role,
+                password: form.password, confirmPassword: form.confirmPassword,
+            }).then(() => { toast.success('User created.', { position: 'top-center' }); done(); }).catch(err);
         }
+    };
 
-        setLoader(true);
-        axios
-            .put(url, data)
-            .then(function (response) {
-                // handle success
-                toast.success(response.data.user + ' successfully edited.', {
-                    position: "top-center"
-                });
-                setEditModal(false);
-                setLoader(false);
-                setId(-1);
-                setUserName('');
-                setPassword('');
-                setConfirmPassword('');
-                setName('');
-                setRole('');
-            })
-            .catch(function (error) {
-                // handle error
-                toast.error(error.response.data, {
-                    position: "top-center"
-                });
-                setLoader(false);
-            })
-            .finally(function () {
-                // always executed
-            });
-    }
+    const changePassword = () => {
+        axios.put(apihost + 'users/change-password/' + pwId, { Password: pw.password, ConfirmPassword: pw.confirmPassword })
+            .then(() => { toast.success('Password changed.', { position: 'top-center' }); setPwId(null); setPw({}); })
+            .catch((e) => toast.error(typeof e.response?.data === 'string' ? e.response.data : 'Error', { position: 'top-center' }));
+    };
 
-    const handleOpenEditModal = (params) => {
-        setId(params.id);
-        setEditModal(true);
-        setUserName(params.userName);
-        setName(params.name);
-        var data = params.role !== "" ? params.role : "";
-        setRole([{ label: data, value: data }]);
-    }
-
-    const handlCloseEditModal = () => {
-        setEditModal(false);
-        setId(-1);
-        setUserName("");
-        setPassword("");
-        setConfirmPassword("");
-        setName("");
-        setRole("");
-    }
-
-    const onDelete = (value) => {
-        setId(value);
-        setDeletePopup(true);
-    }
-
-    const handleCloseDeleteModal = () => {
-        setDeletePopup(false);
-        setId(-1);
-        setUserName("");
-        setPassword("");
-        setConfirmPassword("");
-        setName("");
-        setRole("");
-    }
-
-    const handleDeleteUser = () => {
-        var url = window.apihost + `users/${id}`;
-        setLoader(true);
-        axios
-            .delete(url)
-            .then(function (response) {
-                // handle success
-                if (response.status <= 200) {
-                    toast.success('User successfully deleted!', {
-                        position: "top-center"
-                    });
-                    setId(-1);
-                    setLoader(false);
-                    setDeletePopup(false);
-                }
-            })
-            .catch((err) => {
-                if (err.response.status === 400) {
-                    const error = {
-                        status: err.response.status,
-                        error: err.response.data,
-                    };
-                    toast.error(error.response.data, {
-                        position: "top-center"
-                    });
-                    setLoader(false);
-                } else {
-                    // alert(err.response.status + JSON.stringify(err.response.data));
-                    const error = {
-                        status: err.response.status,
-                        error: JSON.stringify(err.response.data),
-                    };
-                    alert(JSON.stringify(error));
-                    setLoader(false);
-                }
-            });
-    }
-
-    const handleChangePassword = () => {
-        var route = `users/change-password/${id}`;
-        var url = window.apihost + route;
-        // var token = sessionStorage.getItem("auth-token");
-
-        var data = {
-            Password: password,
-            ConfirmPassword: confirmPassword
-        }
-
-        setLoader(true);
-        axios
-            .put(url, data)
-            .then(function (response) {
-                // handle success
-                toast.success(response.data.user + ' successfully changed password.', {
-                    position: "top-center"
-                });
-                setChangePassModal(false);
-                setLoader(false);
-                setId(-1);
-                setUserName('');
-                setPassword('');
-                setConfirmPassword('');
-                setName('');
-                setRole('');
-            })
-            .catch(function (error) {
-                // handle error
-                toast.error(error.response.data, {
-                    position: "top-center"
-                });
-                setLoader(false);
-            })
-            .finally(function () {
-                // always executed
-            });
-    }
-
-    const handlCloseChangePassModal = () => {
-        setChangePassModal(false);
-        setId(-1);
-        setUserName('');
-        setPassword('');
-        setConfirmPassword('');
-        setName('');
-        setRole('');
-    }
-
-    const handleOpenChangePassModal = (value) => {
-        setChangePassModal(true);
-        setId(value);
-    }
+    const doDelete = () => {
+        axios.delete(apihost + 'users/' + confirmDel)
+            .then(() => { toast.info('User deleted.', { position: 'top-center' }); setConfirmDel(null); setReload((r) => !r); })
+            .catch(() => setConfirmDel(null));
+    };
 
     return (
-        <div style={{ padding: 10, width: '100%', boxSizing: 'border-box' }}>
+        <Paper style={{ padding: 24, borderRadius: 14 }}>
             <ToastContainer />
-
-            {/* Top Controls */}
-            <div
-                style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 20,
-                    gap: '10px',
-                }}
-            >
-                <Button
-                    size='large'
-                    onClick={() => setAddModal(true)}
-                    variant="contained"
-                    style={{ minWidth: 140 }}
-                >
-                    <Add /> Add User
-                </Button>
-
-                <div style={{ flex: 1, minWidth: 200, maxWidth: 400 }}>
-                    <Select
-                        defaultValue={selectedUser}
-                        options={UsersOption(usersOptionsList)}
-                        onChange={e => setSelectedUser(e)}
-                        placeholder='Search...'
-                        isClearable
-                        isMulti
-                        theme={theme => ({
-                            ...theme,
-                            colors: { ...theme.colors, text: 'black', primary25: '#66c0f4', primary: '#B9B9B9' },
-                        })}
-                        styles={customMultiSelectStyle}
-                    />
-                </div>
-            </div>
-
-            {/* Users Grid */}
-            <div
-                style={{
-                    backgroundColor: '#F4F4F4',
-                    minHeight: '75vh',
-                    maxHeight: '75vh',
-                    overflowY: 'auto',
-                    padding: 10,
-                    boxSizing: 'border-box',
-                }}
-            >
-                <Grid container spacing={3}>
-                    {usersList && usersList.map(user => (
-                        <Grid item xs={12} sm={6} md={4} lg={3} key={user.id}>
-                            <Card style={{ height: '100%' }}>
-                                <CardActionArea>
-                                    <CardContent>
-                                        <Typography variant="h6"><strong>Name:</strong> {user.name}</Typography>
-                                        <Typography variant="h6"><strong>Username:</strong> {user.userName}</Typography>
-                                        <Typography variant="body1"><strong>Role:</strong> {user.role}</Typography>
-                                    </CardContent>
-                                </CardActionArea>
-                                <CardActions style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                                    <Button size="small" color="primary" disabled={user.userName === "superadmin"} onClick={() => handleOpenEditModal(user)}>Edit</Button>
-                                    <Button size="small" color="primary" disabled={user.userName === "superadmin"} onClick={() => handleOpenChangePassModal(user.id)}>Change Password</Button>
-                                    <Button size="small" color="secondary" disabled={user.userName === "superadmin"} onClick={() => onDelete(user.id)}>Delete</Button>
-                                </CardActions>
-                            </Card>
-                        </Grid>
-                    ))}
-
-                    {(!usersList || usersList.length === 0) && loader !== true && (
-                        <div style={{ textAlign: 'center', padding: 120, width: '100%' }}>
-                            <h1 style={{ color: "#C4C4C4" }}>No data found!</h1>
-                        </div>
-                    )}
-
-                    {loader && (
-                        <div style={{ margin: '0 auto', textAlign: 'center', width: '100%' }}>
-                            <CircularProgress />
-                        </div>
-                    )}
+            <Grid container spacing={2} alignItems="center" style={{ marginBottom: 16 }}>
+                <Grid item><Typography variant="h6">User Management</Typography></Grid>
+                <Grid item xs />
+                <Grid item>
+                    <TextField size="small" placeholder="Search users" value={search} onChange={(e) => setSearch(e.target.value)}
+                        InputProps={{ startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment> }} />
                 </Grid>
-            </div>
+                <Grid item>
+                    <Button variant="contained" color="primary" startIcon={<PersonAdd />} onClick={openAdd}>Add User</Button>
+                </Grid>
+            </Grid>
 
+            <TableContainer>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>User</TableCell>
+                            <TableCell>Username</TableCell>
+                            <TableCell>Role</TableCell>
+                            <TableCell align="right">Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loader && <TableRow><TableCell colSpan={4} align="center"><CircularProgress size={28} /></TableCell></TableRow>}
+                        {!loader && list.length === 0 && <TableRow><TableCell colSpan={4} align="center" style={{ color: '#94A3B8', padding: 40 }}>No users found.</TableCell></TableRow>}
+                        {!loader && list.map((u) => {
+                            const rc = roleColor(u.role);
+                            return (
+                                <TableRow key={u.id} hover>
+                                    <TableCell>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                            <Avatar style={{ backgroundColor: rc.fg }}>{(u.name || '?').charAt(0).toUpperCase()}</Avatar>
+                                            <span style={{ fontWeight: 600 }}>{u.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{u.userName}</TableCell>
+                                    <TableCell><Chip size="small" label={u.role} style={{ backgroundColor: rc.bg, color: rc.fg, fontWeight: 600 }} /></TableCell>
+                                    <TableCell align="right" style={{ whiteSpace: 'nowrap' }}>
+                                        <Tooltip title="Edit"><IconButton size="small" onClick={() => openEdit(u)}><Edit fontSize="small" /></IconButton></Tooltip>
+                                        <Tooltip title="Change Password"><IconButton size="small" onClick={() => { setPwId(u.id); setPw({}); }}><VpnKey fontSize="small" /></IconButton></Tooltip>
+                                        <Tooltip title="Delete"><IconButton size="small" onClick={() => setConfirmDel(u.id)}><Delete fontSize="small" /></IconButton></Tooltip>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
-            {/* <TablePagination
-                // rowsPerPageOptions={[10, 25, 100]}
-                labelRowsPerPage=''
-                rowsPerPageOptions={[]}
-                component="div"
-                count={totalEmp}
-                rowsPerPage={20}
-                page={page}
-                onChangePage={handleChangePage}
-            // onChangeRowsPerPage={handleChangeRowsPerPage}
-            /> */}
+            {/* Add / Edit */}
+            <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs">
+                <DialogTitle>{editId ? 'Edit User' : 'Add User'}</DialogTitle>
+                <DialogContent>
+                    <TextField label="Full Name" fullWidth value={form.name || ''} onChange={(e) => setF('name', e.target.value)} style={{ marginBottom: 12 }} />
+                    <TextField label="Username" fullWidth value={form.userName || ''} onChange={(e) => setF('userName', e.target.value)} style={{ marginBottom: 12 }} />
+                    <TextField select label="Role" fullWidth value={form.role || ''} onChange={(e) => setF('role', e.target.value)} style={{ marginBottom: 12 }}>
+                        {ROLES.map((r) => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+                    </TextField>
+                    {!editId && <>
+                        <TextField type="password" label="Password" fullWidth value={form.password || ''} onChange={(e) => setF('password', e.target.value)} style={{ marginBottom: 12 }} />
+                        <TextField type="password" label="Confirm Password" fullWidth value={form.confirmPassword || ''} onChange={(e) => setF('confirmPassword', e.target.value)} />
+                    </>}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpen(false)}>Cancel</Button>
+                    <Button variant="contained" color="primary" onClick={save}>Save</Button>
+                </DialogActions>
+            </Dialog>
 
-            <Modal
-                open={addModal}
-                onClose={handlCloseAddModal}
-                closeAfterTransition
-                BackdropComponent={Backdrop}
-                BackdropProps={{ timeout: 500 }}
-            >
-                <Fade in={addModal}>
-                    <div
-                        style={{
-                            background: '#ffffff',
-                            borderRadius: 20,
-                            padding: '30px 25px',
-                            width: '90%',
-                            maxWidth: 500,
-                            margin: 'auto',
-                            outline: 'none',
-                            boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 20,
-                            maxHeight: '90vh', // ensures modal never exceeds viewport
-                            overflowY: 'auto', // scroll inside modal if content too tall
-                            marginTop: 20
-                        }}
-                    >
-                        {/* Header */}
-                        <div style={{ textAlign: 'left' }}>
-                            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Add Employee</h2>
-                        </div>
+            {/* Change Password */}
+            <Dialog open={Boolean(pwId)} onClose={() => setPwId(null)} fullWidth maxWidth="xs">
+                <DialogTitle>Change Password</DialogTitle>
+                <DialogContent>
+                    <TextField type="password" label="New Password" fullWidth value={pw.password || ''} onChange={(e) => setPw((p) => ({ ...p, password: e.target.value }))} style={{ marginBottom: 12 }} />
+                    <TextField type="password" label="Confirm Password" fullWidth value={pw.confirmPassword || ''} onChange={(e) => setPw((p) => ({ ...p, confirmPassword: e.target.value }))} />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPwId(null)}>Cancel</Button>
+                    <Button variant="contained" color="primary" onClick={changePassword}>Save</Button>
+                </DialogActions>
+            </Dialog>
 
-                        <Divider style={{ marginBottom: 10 }} />
-
-                        {/* Form Fields */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            <label style={{ fontSize: 14, fontWeight: 500 }}>Name</label>
-                            <TextField fullWidth variant="outlined" size="small" value={name} onChange={e => setName(e.target.value)} />
-
-                            <label style={{ fontSize: 14, fontWeight: 500 }}>Role</label>
-                            <Select
-                                defaultValue={role}
-                                options={RoleOption()}
-                                onChange={e => setRole(e)}
-                                placeholder="Select Role"
-                                theme={theme => ({
-                                    ...theme,
-                                    colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
-                                })}
-                                styles={customSelectStyle}
-                            />
-
-                            <label style={{ fontSize: 14, fontWeight: 500 }}>Username</label>
-                            <TextField fullWidth variant="outlined" size="small" value={userName} onChange={e => setUserName(e.target.value)} />
-
-                            <label style={{ fontSize: 14, fontWeight: 500 }}>Password</label>
-                            <TextField fullWidth type="password" variant="outlined" size="small" value={password} onChange={e => setPassword(e.target.value)} />
-
-                            <label style={{ fontSize: 14, fontWeight: 500 }}>Confirm Password</label>
-                            <TextField fullWidth type="password" variant="outlined" size="small" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-                        </div>
-
-                        {/* Buttons */}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
-                            <Button
-                                variant="outlined"
-                                onClick={handlCloseAddModal}
-                                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                startIcon={<Save />}
-                                onClick={handleAddUser}
-                                disabled={loader}
-                                style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
-                            >
-                                Submit
-                            </Button>
-                        </div>
-                    </div>
-                </Fade>
-            </Modal>
-
-            {/* Edit User Modal */}
-<Modal
-    open={editModal}
-    onClose={handlCloseEditModal}
-    closeAfterTransition
-    BackdropComponent={Backdrop}
-    BackdropProps={{ timeout: 500 }}
->
-    <Fade in={editModal}>
-        <div
-            style={{
-                background: '#ffffff',
-                borderRadius: 20,
-                padding: '30px 25px',
-                width: '90%',
-                maxWidth: 500,
-                margin: 'auto',
-                outline: 'none',
-                boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 20,
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                marginTop: 20
-            }}
-        >
-            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Edit User</h2>
-            <Divider style={{ marginBottom: 10 }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <label style={{ fontSize: 14, fontWeight: 500 }}>Name</label>
-                <TextField fullWidth variant="outlined" size="small" value={name} onChange={e => setName(e.target.value)} />
-
-                <label style={{ fontSize: 14, fontWeight: 500 }}>Role</label>
-                <Select
-                    defaultValue={role}
-                    options={RoleOption()}
-                    onChange={e => setRole(e)}
-                    placeholder="Select Role"
-                    theme={theme => ({
-                        ...theme,
-                        colors: { ...theme.colors, text: '#333', primary25: '#e3f2fd', primary: '#1e88e5' },
-                    })}
-                    styles={customSelectStyle}
-                />
-
-                <label style={{ fontSize: 14, fontWeight: 500 }}>Username</label>
-                <TextField fullWidth variant="outlined" size="small" value={userName} onChange={e => setUserName(e.target.value)} />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
-                <Button
-                    variant="outlined"
-                    onClick={handlCloseEditModal}
-                    style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<Save />}
-                    onClick={handleEditUser}
-                    disabled={loader}
-                    style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
-                >
-                    Submit
-                </Button>
-            </div>
-        </div>
-    </Fade>
-</Modal>
-
-{/* Delete User Modal */}
-<Modal
-    open={deletePopup}
-    onClose={handleCloseDeleteModal}
-    closeAfterTransition
-    BackdropComponent={Backdrop}
-    BackdropProps={{ timeout: 500 }}
->
-    <Fade in={deletePopup}>
-        <div
-            style={{
-                background: '#ffffff',
-                borderRadius: 20,
-                padding: '30px 25px',
-                width: '90%',
-                maxWidth: 400,
-                margin: 'auto',
-                outline: 'none',
-                boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 20,
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                marginTop: 20
-            }}
-        >
-            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Warning</h2>
-            <Divider style={{ marginBottom: 10 }} />
-
-            <p>Are you sure you want to delete this User?</p>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
-                <Button
-                    variant="outlined"
-                    onClick={handleCloseDeleteModal}
-                    style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    startIcon={<Delete />}
-                    onClick={handleDeleteUser}
-                    disabled={loader}
-                    style={{ flex: '1 1 45%', borderRadius: 10, background: '#f44336', color: '#fff', textTransform: 'none' }}
-                >
-                    Delete
-                </Button>
-            </div>
-        </div>
-    </Fade>
-</Modal>
-
-{/* Change Password Modal */}
-<Modal
-    open={changePassModal}
-    onClose={handlCloseChangePassModal}
-    closeAfterTransition
-    BackdropComponent={Backdrop}
-    BackdropProps={{ timeout: 500 }}
->
-    <Fade in={changePassModal}>
-        <div
-            style={{
-                background: '#ffffff',
-                borderRadius: 20,
-                padding: '30px 25px',
-                width: '90%',
-                maxWidth: 500,
-                margin: 'auto',
-                outline: 'none',
-                boxShadow: '0 15px 30px rgba(0,0,0,0.2)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 20,
-                maxHeight: '90vh',
-                overflowY: 'auto',
-                marginTop: 20
-            }}
-        >
-            <h2 style={{ margin: 0, color: '#333', fontWeight: 600 }}>Change Password</h2>
-            <Divider style={{ marginBottom: 10 }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <label style={{ fontSize: 14, fontWeight: 500 }}>Password</label>
-                <TextField fullWidth type="password" variant="outlined" size="small" value={password} onChange={e => setPassword(e.target.value)} />
-
-                <label style={{ fontSize: 14, fontWeight: 500 }}>Confirm Password</label>
-                <TextField fullWidth type="password" variant="outlined" size="small" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
-                <Button
-                    variant="outlined"
-                    onClick={handlCloseChangePassModal}
-                    style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
-                >
-                    Cancel
-                </Button>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<Save />}
-                    onClick={handleChangePassword}
-                    disabled={loader}
-                    style={{ flex: '1 1 45%', borderRadius: 10, background: 'linear-gradient(90deg, #1e88e5, #42a5f5)', color: '#fff', textTransform: 'none' }}
-                >
-                    Submit
-                </Button>
-            </div>
-        </div>
-    </Fade>
-</Modal>
-        </div >
+            {/* Delete */}
+            <Dialog open={Boolean(confirmDel)} onClose={() => setConfirmDel(null)}>
+                <DialogTitle>Delete User</DialogTitle>
+                <DialogContent><Typography>Are you sure you want to delete this user?</Typography></DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmDel(null)}>Cancel</Button>
+                    <Button variant="contained" color="secondary" onClick={doDelete}>Delete</Button>
+                </DialogActions>
+            </Dialog>
+        </Paper>
     );
 }
 
-export default Users;
+export default User;

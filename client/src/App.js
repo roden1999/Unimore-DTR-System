@@ -6,6 +6,8 @@ import Main from './components/main';
 import Login from './components/login';
 import ModuleSelection from './components/moduleSelection';
 import ToolsModule from './components/tools/ToolsModule';
+import MachinePartsModule from './components/machineParts/MachinePartsModule';
+import ProductionModule from './components/production/ProductionModule';
 import UserContext from './components/context/userContext';
 import theme from './theme';
 
@@ -97,8 +99,22 @@ function App() {
           <ToolsModule path={path} navigate={navigate} onExitModule={() => navigate('/home')} />
         }
 
-        {loader === false && userData.user && !HR_PATHS.includes(path) && !path.startsWith('/tools') &&
-          <ModuleSelection onSelectHR={() => navigate('/employee')} onSelectTools={() => navigate('/tools/tools')} />
+        {loader === false && userData.user && path.startsWith('/machine-parts') &&
+          <MachinePartsModule onExitModule={() => navigate('/home')} />
+        }
+
+        {loader === false && userData.user && path.startsWith('/production') &&
+          <ProductionModule path={path} navigate={navigate} onExitModule={() => navigate('/home')} />
+        }
+
+        {loader === false && userData.user && !HR_PATHS.includes(path)
+          && !path.startsWith('/tools') && !path.startsWith('/machine-parts') && !path.startsWith('/production') &&
+          <ModuleSelection
+            onSelectHR={() => navigate('/employee')}
+            onSelectInventory={() => navigate('/tools/tools')}
+            onSelectMachineParts={() => navigate('/machine-parts')}
+            onSelectProduction={() => navigate('/production/create-dr')}
+          />
         }
 
         {loader === false && !userData.user &&

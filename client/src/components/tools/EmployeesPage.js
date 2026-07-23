@@ -5,7 +5,7 @@ import {
     DialogTitle, DialogContent, DialogActions, IconButton, Typography, CircularProgress
 } from '@material-ui/core';
 import { Add, Edit, Delete } from '@material-ui/icons';
-import Select from 'react-select';
+import Select from '../common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
