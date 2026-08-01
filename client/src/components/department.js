@@ -29,7 +29,7 @@ import {
 } from '@material-ui/pickers';
 import { Save, Edit, Delete, Add } from '@material-ui/icons/';
 import { useSpring, animated } from 'react-spring';
-import Select from 'react-select';
+import Select from './common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { TextField } from '@material-ui/core';
@@ -40,7 +40,7 @@ const moment = require("moment");
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
-        backgroundColor: 'white',
+        backgroundColor: theme.palette.background.paper,
         padding: 20,
         borderRadius: 10,
         height: '100%',
@@ -229,7 +229,7 @@ const IOSSwitch = withStyles((theme) => ({
     track: {
         borderRadius: 26 / 2,
         border: `1px solid ${theme.palette.grey[400]}`,
-        backgroundColor: theme.palette.grey[50],
+        backgroundColor: theme.palette.type === 'dark' ? theme.palette.grey[700] : theme.palette.grey[50],
         opacity: 1,
         transition: theme.transitions.create(['background-color', 'border']),
     },
@@ -693,7 +693,7 @@ const Department = () => {
                 />
             </div>
 
-            <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '75vh', maxHeight: '75vh', overflowY: 'scroll', overflowX: 'hidden' }}>
+            <div style={{ padding: 10, backgroundColor: 'var(--app-bg-subtle)', marginTop: 60, height: '100', minHeight: '75vh', maxHeight: '75vh', overflowY: 'scroll', overflowX: 'hidden' }}>
                 <Grid container spacing={3}>
                     {departmentList.length > 0 && departmentList.map(x =>
                         <Grid item xs={4}>

@@ -23,13 +23,14 @@ import Modal from '@material-ui/core/Modal';
 import Backdrop from '@material-ui/core/Backdrop';
 import { Save, Edit, Delete, Add, Print } from '@material-ui/icons/';
 import { useSpring, animated } from 'react-spring';
-import Select from 'react-select';
+import Select from '../common/Dropdown';
 import Portal from '@material-ui/core/Portal';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { TextField } from '@material-ui/core';
 import { DropzoneDialog } from 'material-ui-dropzone'
 import * as XLSX from "xlsx";
+import EmployeeAvatar from '../common/EmployeeAvatar';
 
 //import pdfmake
 import pdfMake from 'pdfmake/build/pdfmake.js';
@@ -43,7 +44,7 @@ const moment = require("moment");
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
-        backgroundColor: 'white',
+        backgroundColor: theme.palette.background.paper,
         padding: 20,
         borderRadius: 10,
         height: '100%',
@@ -170,11 +171,11 @@ const StyledTableRow = withStyles((theme) => ({
 }))(TableRow);
 
 
-const RawLogs = () => {
+const RawLogs = ({ deviceName = 'NIDEKA NU32' }) => {
     const classes = useStyles();
-    var rawSemp = JSON.parse(sessionStorage.getItem("rawSemp"));
-    var rawSfromDate = sessionStorage.getItem("rawSfromDate");
-    var rawStoDate = sessionStorage.getItem("rawStoDate");
+    var rawSemp = JSON.parse(sessionStorage.getItem("rawSemp")) || { emp: [] };
+    var rawSfromDate = sessionStorage.getItem("rawSfromDate") || moment().startOf('month').format('YYYY-MM-DD');
+    var rawStoDate = sessionStorage.getItem("rawStoDate") || moment().format('YYYY-MM-DD');
     const [loader, setLoader] = useState(true);
     const [logData, setLogData] = useState(null);
     const [printData, setPrintData] = useState(null);
@@ -280,6 +281,7 @@ const RawLogs = () => {
             id: x._id,
             employeeNo: x.employeeNo,
             employeeName: x.employeeName,
+            image: x.image || '',
             timeInOut: x.timeInOut,
             dateTime: x.dateTime
         }))
@@ -290,6 +292,7 @@ const RawLogs = () => {
             id: x._id,
             employeeNo: x.employeeNo,
             employeeName: x.employeeName,
+            image: x.image || '',
             timeInOut: x.timeInOut,
             dateTime: x.dateTime
         }))
@@ -325,8 +328,8 @@ const RawLogs = () => {
 
     const employeeOptionsList = employeeOptions
         ? employeeOptions.map((x) => ({
-            id: x._id,
-            name: x.lastName + " " + x.firstName + " " + x.middleName + " " + x.suffix + " - (" + x.employeeNo + ")",
+            id: x.id || x._id,
+            name: (x.employeeName || [x.lastName, x.firstName, x.middleName, x.suffix].filter(Boolean).join(' ')) + " - (" + x.employeeNo + ")",
             employeeNo: x.employeeNo
         }))
         : [];
@@ -617,7 +620,7 @@ const RawLogs = () => {
                 variant="contained"
                 color="default"
                 startIcon={<Add />}
-                disabled={role === "Administrator" || role === "Device Manager" ? false : true}
+                disabled={!['Administrator', 'HR', 'IT'].includes(role)}
                 onClick={() => setAddModal(true)}>
                 Import Logs
             </Button>
@@ -683,14 +686,15 @@ const RawLogs = () => {
                 variant="contained"
                 color="default"
                 startIcon={<Print />}
-                disabled={role === "Administrator" || role === "Device Manager" ? false : true}
+                disabled={!['Administrator', 'HR', 'IT'].includes(role)}
                 onClick={() => exportToPDF(printList)}>Print Raw Logs</Button>
 
-            <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '68vh', maxHeight: '68vh', overFlowY: 'auto' }}>
+            <div style={{ padding: 10, backgroundColor: 'var(--app-bg-subtle)', marginTop: 60, height: '100', minHeight: '68vh', maxHeight: '68vh', overflowY: 'auto' }}>
                 <TableContainer className={classes.tbcontainer}>
                     <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                             <TableRow>
+                                <StyledTableCell>Profile</StyledTableCell>
                                 <StyledTableCell>Employee No</StyledTableCell>
                                 <StyledTableCell>Employee Name</StyledTableCell>
                                 <StyledTableCell>Mode</StyledTableCell>
@@ -701,6 +705,7 @@ const RawLogs = () => {
                         <TableBody>
                             {logList.length !== 0 && logList.map(x =>
                                 <StyledTableRow hover role="checkbox" tabIndex={-1} key={x.id}>
+                                    <StyledTableCell><EmployeeAvatar image={x.image} name={x.employeeName} size={34} /></StyledTableCell>
                                     <StyledTableCell>
                                         {x.employeeNo}
                                     </StyledTableCell>
@@ -763,7 +768,7 @@ const RawLogs = () => {
 
             <DropzoneDialog
                 open={addModal}
-                dialogTitle={"Upload file from NIDEKA NU-2302 Biometrics device."}
+                dialogTitle={`Upload attendance file from ${deviceName} biometric device.`}
                 // onSave={this.handleSave.bind(this)}
                 // onSave={e => handleImportLogs(e)}
                 onSave={e => handleUploadXlsFile(e)}

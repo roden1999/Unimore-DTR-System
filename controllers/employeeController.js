@@ -1,6 +1,8 @@
 const employeeModel = require("../models/employeeModel");
 const departmentModel = require("../models/departmentModel");
 const { employeeValidation } = require("../utils/validation");
+const moment = require("moment");
+const { computeEmployeeDTR } = require("../utils/dtrCalculator");
 
 const PER_PAGE = 20;
 
@@ -18,6 +20,8 @@ const buildEmployeeResponse = async (emp) => {
         contactNo: emp.ContactNo,
         gender: emp.Gender,
         address: emp.Address,
+        image: emp.Image || "",
+        birthDate: emp.BirthDate,
     };
 };
 
@@ -39,6 +43,8 @@ const createEmployee = async (request, response) => {
             contactNo: request.body.contactNo,
             gender: request.body.gender,
             address: request.body.address,
+            image: request.body.image,
+            birthDate: request.body.birthDate,
         });
 
         response.status(200).json({ employee: `${emp.EmployeeNo} - ${emp.FirstName}` });
@@ -59,6 +65,8 @@ const updateEmployee = async (request, response) => {
             contactNo: request.body.contactNo,
             gender: request.body.gender,
             address: request.body.address,
+            image: request.body.image,
+            birthDate: request.body.birthDate,
         });
 
         response.status(200).json({
@@ -112,6 +120,7 @@ const employeeOptions = async (request, response) => {
             id: e.Id,
             employeeNo: e.EmployeeNo,
             employeeName: `${e.FirstName} ${e.MiddleName} ${e.LastName}`.trim(),
+            image: e.Image || "",
         })));
     } catch (error) {
         response.status(500).json({ error: error.message });
@@ -131,7 +140,56 @@ const employeeOptionsByDepartment = async (request, response) => {
             middleName: e.MiddleName,
             lastName: e.LastName,
             suffix: e.Suffix,
+            image: e.Image || "",
+            birthDate: e.BirthDate,
         })));
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+};
+
+const dashboard = async (_request, response) => {
+    try {
+        const metrics = await employeeModel.getDashboardMetrics();
+        const employees = await employeeModel.getAll();
+        const fromDate = moment().startOf('month').toDate();
+        const toDate = moment().toDate();
+        const tardiness = await Promise.all(employees.map(async (employee) => {
+            try {
+                const dtr = await computeEmployeeDTR(employee, fromDate, toDate);
+                return {
+                    id: employee.Id,
+                    employeeNo: employee.EmployeeNo,
+                    employeeName: `${employee.LastName}, ${employee.FirstName} ${employee.MiddleName}`.trim(),
+                    image: employee.Image || "",
+                    lateHours: Number(dtr.totalLate || 0),
+                    undertimeHours: Number(dtr.totalUT || 0),
+                    absentDays: Number(dtr.totalAbsent || 0),
+                };
+            } catch (_error) {
+                return null;
+            }
+        }));
+
+        response.json({
+            activeEmployees: metrics.workforce.ActiveEmployees || 0,
+            resignedEmployees: metrics.workforce.ResignedEmployees || 0,
+            totalEmployees: metrics.workforce.TotalEmployees || 0,
+            totalDepartments: metrics.departments.TotalDepartments || 0,
+            correctionsThisMonth: metrics.corrections.CorrectionsThisMonth || 0,
+            upcomingBirthdays: metrics.upcomingBirthdays.map(employee => ({
+                id: employee.Id,
+                employeeNo: employee.EmployeeNo,
+                employeeName: `${employee.FirstName} ${employee.MiddleName} ${employee.LastName}`.trim(),
+                image: employee.Image || "",
+                birthDate: employee.BirthDate,
+                nextBirthday: employee.NextBirthday,
+            })),
+            departmentDistribution: metrics.departmentDistribution.map(department => ({
+                id: department.Id, department: department.Department, employeeCount: department.EmployeeCount,
+            })),
+            topTardiness: tardiness.filter(Boolean).sort((a, b) => b.lateHours - a.lateHours).slice(0, 10),
+        });
     } catch (error) {
         response.status(500).json({ error: error.message });
     }
@@ -148,5 +206,5 @@ const deleteEmployee = async (request, response) => {
 
 module.exports = {
     createEmployee, updateEmployee, listEmployees, totalEmployees,
-    employeeOptions, employeeOptionsByDepartment, deleteEmployee
+    employeeOptions, employeeOptionsByDepartment, deleteEmployee, dashboard
 };

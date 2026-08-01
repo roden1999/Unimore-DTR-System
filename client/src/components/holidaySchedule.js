@@ -9,7 +9,7 @@ import { NavigateNext, NavigateBefore, Add, Save, Close, Delete, Edit } from '@m
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Divider } from '@material-ui/core';
-import Select from 'react-select';
+import Select from './common/Dropdown';
 import Portal from '@material-ui/core/Portal';
 import { ToastContainer, toast } from 'react-toastify';
 
@@ -46,6 +46,26 @@ const useStyles = makeStyles((theme) => ({
         border: '2px solid #000',
         boxShadow: theme.shadows[5],
         padding: theme.spacing(2, 4, 3),
+    },
+    calendarRoot: {
+        height: 700,
+        padding: 5,
+        color: theme.palette.text.primary,
+        backgroundColor: theme.palette.background.paper,
+        '& .rbc-calendar': { color: theme.palette.text.primary },
+        '& .rbc-month-view, & .rbc-time-view, & .rbc-agenda-view table': {
+            borderColor: theme.palette.divider,
+            backgroundColor: theme.palette.background.paper,
+        },
+        '& .rbc-header, & .rbc-time-header-content, & .rbc-timeslot-group, & .rbc-day-bg, & .rbc-month-row': {
+            borderColor: theme.palette.divider,
+        },
+        '& .rbc-day-bg + .rbc-day-bg, & .rbc-month-row + .rbc-month-row': { borderColor: theme.palette.divider },
+        '& .rbc-off-range-bg': { backgroundColor: theme.palette.type === 'dark' ? '#111827' : '#E5E7EB' },
+        '& .rbc-today': { backgroundColor: theme.palette.type === 'dark' ? 'rgba(125,151,255,.16)' : '#EAF2FF' },
+        '& .rbc-off-range, & .rbc-agenda-empty': { color: theme.palette.text.secondary },
+        '& .rbc-show-more': { backgroundColor: theme.palette.background.paper, color: theme.palette.primary.main },
+        '& .rbc-agenda-date-cell, & .rbc-agenda-time-cell, & .rbc-agenda-event-cell': { borderColor: theme.palette.divider },
     },
 }));
 
@@ -389,7 +409,7 @@ const HolidaySchedule = () => {
     }
 
     return (
-        <div style={{ height: 700, backgroundColor: 'white', padding: 5 }}>
+        <div className={classes.calendarRoot}>
             <Portal>
                 <ToastContainer />
             </Portal>

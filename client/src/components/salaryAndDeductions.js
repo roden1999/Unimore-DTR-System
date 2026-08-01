@@ -18,10 +18,11 @@ import Backdrop from '@material-ui/core/Backdrop';
 import { Save, Edit, Delete, Add } from '@material-ui/icons/';
 import { useSpring, animated } from 'react-spring';
 // import { useSpring, animated } from 'react-spring/web.cjs';
-import Select from 'react-select';
+import Select from './common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { TextField } from '@material-ui/core';
+import EmployeeAvatar from './common/EmployeeAvatar';
 
 const axios = require("axios");
 const moment = require("moment");
@@ -29,7 +30,7 @@ const moment = require("moment");
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
-        backgroundColor: 'white',
+        backgroundColor: theme.palette.background.paper,
         padding: 20,
         borderRadius: 10,
         height: '100%',
@@ -226,6 +227,7 @@ const SalaryAndDeduction = () => {
             id: x._id,
             employeeNo: x.employeeNo,
             employeeName: x.employeeName,
+            image: x.image || '',
             // deptId: x.deptId,
             department: x.department,
             salary: x.salary,
@@ -583,16 +585,18 @@ const SalaryAndDeduction = () => {
                 />
             </div>
 
-            <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '75vh', maxHeight: '75vh', overflowY: 'scroll' }}>
+            <div style={{ padding: 10, backgroundColor: 'var(--app-bg-subtle)', marginTop: 60, height: '100', minHeight: '75vh', maxHeight: '75vh', overflowY: 'scroll' }}>
                 <Grid container spacing={3}>
                     {employeeList.length > 0 && employeeList.map(x =>
                         <Grid item xs={4}>
                             <Card>
                                 <CardActionArea>
                                     <CardContent>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}><EmployeeAvatar image={x.image} name={x.employeeName} size={48} />
                                         <Typography gutterBottom>
                                             <strong>{x.employeeName + " - (" + x.employeeNo + ")"}</strong>
                                         </Typography>
+                                        </div>
                                         <Typography gutterBottom>
                                             <strong>Salary: ₱{x.salary.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</strong>
                                         </Typography>

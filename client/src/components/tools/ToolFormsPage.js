@@ -10,6 +10,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
 import { exportProjectTools } from './pdfExport';
+import EmployeeAvatar from '../common/EmployeeAvatar';
 
 const axios = require('axios');
 const STATUSES = ['On Going', 'Finished'];
@@ -93,7 +94,7 @@ function ToolFormsPage() {
             <ToastContainer />
             <Grid item xs={12} md={4}>
                 <Paper style={{ borderRadius: 14, maxHeight: '82vh', overflowY: 'auto' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: '#F1F5FF' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'var(--app-bg-muted)' }}>
                         <Typography variant="subtitle1" style={{ fontWeight: 700 }}>Projects</Typography>
                         <Button size="small" variant="contained" color="primary" startIcon={<Add />} onClick={openAdd}>Add Form</Button>
                     </div>
@@ -141,7 +142,7 @@ function ToolFormsPage() {
                                             <TableRow key={y._id} hover>
                                                 <TableCell>{y.ToolName}</TableCell>
                                                 <TableCell>{y.SerialNo}</TableCell>
-                                                <TableCell>{y.EmployeeName}</TableCell>
+                                                <TableCell><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><EmployeeAvatar image={y.EmployeeImage} name={y.EmployeeName} size={32} />{y.EmployeeName}</div></TableCell>
                                                 <TableCell>{moment(y.DateBorrowed).format('MMM DD, YYYY')}</TableCell>
                                                 <TableCell>{y.Status === 'Returned' ? <CheckCircle fontSize="small" style={{ color: '#16A34A' }} /> : ''}</TableCell>
                                                 <TableCell>{y.DateReturned ? moment(y.DateReturned).format('MM/DD/YYYY | h:mm a') : ''}</TableCell>
@@ -178,9 +179,9 @@ function ToolFormsPage() {
             <Dialog open={borrowOpen} onClose={() => setBorrowOpen(false)} fullWidth maxWidth="xs">
                 <DialogTitle>Borrow Tool</DialogTitle>
                 <DialogContent>
-                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: '#555' }}>Tool</div>
+                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: 'var(--app-text-secondary)' }}>Tool</div>
                         <Select options={toolOpts} value={tool} onChange={setTool} placeholder="Tool..." /></div>
-                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: '#555' }}>Borrower</div>
+                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: 'var(--app-text-secondary)' }}>Borrower</div>
                         <Select options={empOpts} value={emp} onChange={setEmp} placeholder="Borrower..." /></div>
                     <TextField type="date" label="Date Borrowed" InputLabelProps={{ shrink: true }} fullWidth value={dateBorrowed} onChange={(e) => setDateBorrowed(e.target.value)} style={{ marginBottom: 12 }} />
                     <TextField label="Remarks" fullWidth value={remarks} onChange={(e) => setRemarks(e.target.value)} />

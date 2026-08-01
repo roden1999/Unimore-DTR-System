@@ -9,13 +9,21 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 const axios = require('axios');
-const ROLES = ['Administrator', 'HR', 'HR Staff', 'Device Manager'];
+const ROLES = ['Administrator', 'Management', 'HR', 'HR Staff', 'Maintenance', 'Device Manager', 'Production', 'Accounting', 'IT', 'QA', 'Dispatch', 'Sales'];
 
 const roleColor = (r) => {
     switch (r) {
         case 'Administrator': return { bg: '#EDE9FE', fg: '#6D28D9' };
         case 'HR': return { bg: '#DBEAFE', fg: '#1D4ED8' };
         case 'HR Staff': return { bg: '#DCFCE7', fg: '#15803D' };
+        case 'Management': return { bg: '#FEE2E2', fg: '#B91C1C' };
+        case 'Maintenance': return { bg: '#CFFAFE', fg: '#0E7490' };
+        case 'Production': return { bg: '#FEF3C7', fg: '#B45309' };
+        case 'Accounting': return { bg: '#EDE9FE', fg: '#6D28D9' };
+        case 'IT': return { bg: '#DBEAFE', fg: '#1D4ED8' };
+        case 'QA': return { bg: '#D1FAE5', fg: '#047857' };
+        case 'Dispatch': return { bg: '#FFEDD5', fg: '#C2410C' };
+        case 'Sales': return { bg: '#E0F2FE', fg: '#0369A1' };
         default: return { bg: '#FEF3C7', fg: '#B45309' };
     }
 };

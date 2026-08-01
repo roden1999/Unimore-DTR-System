@@ -9,6 +9,7 @@ import Select from '../common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
+import EmployeeAvatar from '../common/EmployeeAvatar';
 
 const axios = require('axios');
 const PER_PAGE = 12;
@@ -105,7 +106,7 @@ function RecordsPage() {
                             <TableRow key={r._id} hover>
                                 <TableCell>{r.ToolName}</TableCell>
                                 <TableCell>{r.SerialNo}</TableCell>
-                                <TableCell>{r.EmployeeName}</TableCell>
+                                <TableCell><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><EmployeeAvatar image={r.EmployeeImage} name={r.EmployeeName} size={32} />{r.EmployeeName}</div></TableCell>
                                 <TableCell>{r.DateBorrowed ? moment(r.DateBorrowed).format('MMM DD, YYYY') : ''}</TableCell>
                                 <TableCell>{r.Project}</TableCell>
                                 <TableCell>{r.ProcessedBy}</TableCell>
@@ -135,7 +136,7 @@ function RecordsPage() {
                             <TableRow key={r._id} hover>
                                 <TableCell>{r.ToolName}</TableCell>
                                 <TableCell>{r.SerialNo}</TableCell>
-                                <TableCell>{r.EmployeeName}</TableCell>
+                                <TableCell><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><EmployeeAvatar image={r.EmployeeImage} name={r.EmployeeName} size={32} />{r.EmployeeName}</div></TableCell>
                                 <TableCell>{r.DateBorrowed ? moment(r.DateBorrowed).format('MMM DD, YYYY') : ''}</TableCell>
                                 <TableCell>{r.DateReturned ? moment(r.DateReturned).format('MMM DD, YYYY | h:mm a') : ''}</TableCell>
                                 <TableCell>{r.ReceivedBy}</TableCell>
@@ -151,11 +152,11 @@ function RecordsPage() {
             <Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="xs">
                 <DialogTitle>Borrow Tool</DialogTitle>
                 <DialogContent>
-                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: '#555' }}>Tool</div>
+                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: 'var(--app-text-secondary)' }}>Tool</div>
                         <Select options={toolOpts} value={tool} onChange={setTool} placeholder="Tool..." /></div>
-                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: '#555' }}>Borrower</div>
+                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: 'var(--app-text-secondary)' }}>Borrower</div>
                         <Select options={empOpts} value={emp} onChange={setEmp} placeholder="Borrower..." /></div>
-                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: '#555' }}>Project (optional)</div>
+                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: 'var(--app-text-secondary)' }}>Project (optional)</div>
                         <Select options={projOpts} value={proj} onChange={setProj} isClearable placeholder="Project..." /></div>
                     <TextField type="date" label="Date Borrowed" InputLabelProps={{ shrink: true }} fullWidth value={dateBorrowed} onChange={(e) => setDateBorrowed(e.target.value)} style={{ marginBottom: 12 }} />
                     <TextField label="Remarks" fullWidth value={remarks} onChange={(e) => setRemarks(e.target.value)} />

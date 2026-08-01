@@ -2,7 +2,7 @@ const { getPool, sql } = require("../../config/db");
 
 // Consumable-form line items, joined to the consumable and borrower.
 const SELECT_JOINED = `
-    SELECT cf.*, c.Name AS Consumable,
+    SELECT cf.*, c.Name AS Consumable, e.Image AS EmployeeImage,
            LTRIM(RTRIM(CONCAT(e.FirstName, ' ', e.MiddleName, ' ', e.LastName))) AS EmployeeName
     FROM ConsumableForms cf
     INNER JOIN Consumables c ON c.Id = cf.ConsumableId

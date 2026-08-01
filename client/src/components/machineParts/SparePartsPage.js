@@ -68,7 +68,7 @@ function SparePartsPage() {
             <ToastContainer />
             <Grid item xs={12} md={3}>
                 <Paper style={{ borderRadius: 14, maxHeight: '82vh', overflowY: 'auto' }}>
-                    <Typography variant="subtitle1" style={{ padding: 16, fontWeight: 700, background: '#F1F5FF' }}>
+                    <Typography variant="subtitle1" style={{ padding: 16, fontWeight: 700, background: 'var(--app-bg-muted)' }}>
                         <Memory fontSize="small" style={{ verticalAlign: 'middle', marginRight: 6 }} />Machines
                     </Typography>
                     <List dense>

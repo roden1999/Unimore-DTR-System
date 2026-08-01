@@ -15,7 +15,7 @@ import Modal from '@material-ui/core/Modal';
 import Backdrop from '@material-ui/core/Backdrop';
 import { Save, Edit, Delete, Add } from '@material-ui/icons/';
 import { useSpring, animated } from 'react-spring';
-import Select from 'react-select';
+import Select from './common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { TextField } from '@material-ui/core';
@@ -30,6 +30,7 @@ import {
   TableContainer
 } from '@material-ui/core';
 import { FormControlLabel } from '@material-ui/core';
+import EmployeeAvatar from './common/EmployeeAvatar';
 
 const axios = require("axios");
 const moment = require("moment");
@@ -37,7 +38,7 @@ const moment = require("moment");
 const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
-    backgroundColor: 'white',
+    backgroundColor: theme.palette.background.paper,
     padding: 20,
     borderRadius: 10,
     height: '100%',
@@ -189,6 +190,8 @@ const Employee = () => {
   const [contactNo, setContactNo] = useState("");
   const [gender, setGender] = useState("");
   const [address, setAddress] = useState("");
+  const [image, setImage] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [addModal, setAddModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [deletePopup, setDeletePopup] = useState(false);
@@ -253,6 +256,8 @@ const Employee = () => {
       contactNo: x.contactNo,
       gender: x.gender,
       address: x.address,
+      image: x.image || '',
+      birthDate: x.birthDate ? moment(x.birthDate).format('YYYY-MM-DD') : '',
     }))
     : [];
 
@@ -416,6 +421,8 @@ const Employee = () => {
       contactNo: contactNo,
       gender: gender ? gender.value : "",
       address: address,
+      image: image,
+      birthDate: birthDate,
     }
 
     setLoader(true);
@@ -444,6 +451,8 @@ const Employee = () => {
         setContactNo("");
         setGender("");
         setAddress("");
+        setImage("");
+        setBirthDate("");
       })
       .catch(function (error) {
         // handle error
@@ -468,6 +477,8 @@ const Employee = () => {
     setGender("");
     setContactNo("");
     setAddress("");
+    setImage("");
+    setBirthDate("");
   }
 
   const handleEditEmployee = () => {
@@ -486,6 +497,8 @@ const Employee = () => {
       contactNo: contactNo,
       gender: gender ? gender.value : "",
       address: address,
+      image: image,
+      birthDate: birthDate,
     }
 
     setLoader(true);
@@ -513,6 +526,8 @@ const Employee = () => {
         setGender("");
         setContactNo("");
         setAddress("");
+        setImage("");
+        setBirthDate("");
       })
       .catch(function (error) {
         // handle error
@@ -541,6 +556,8 @@ const Employee = () => {
     setGender(gndr);
     setContactNo(params.contactNo);
     setAddress(params.address);
+    setImage(params.image || '');
+    setBirthDate(params.birthDate || '');
   }
 
   const handleCloseEditModal = () => {
@@ -556,7 +573,19 @@ const Employee = () => {
     setGender("");
     setContactNo("");
     setAddress("");
+    setImage("");
+    setBirthDate("");
   }
+
+  const handleImageFile = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return toast.error('Please select an image file.', { position: 'top-center' });
+    if (file.size > 2 * 1024 * 1024) return toast.error('Image must be 2 MB or smaller.', { position: 'top-center' });
+    const reader = new FileReader();
+    reader.onload = () => setImage(reader.result);
+    reader.readAsDataURL(file);
+  };
 
   const handleDeleteItem = () => {
     var url = window.apihost + `employees/${id}`;
@@ -674,7 +703,7 @@ const Employee = () => {
       {/* Outer container */}
       <div
         style={{
-          backgroundColor: '#F4F4F4',
+          backgroundColor: 'var(--app-bg-subtle)',
           padding: 10,
           height: '75vh',         // fix the height for scrollable content
           overflowY: 'auto',      // vertical scroll
@@ -695,6 +724,7 @@ const Employee = () => {
                 <Card>
                   <CardActionArea>
                     <CardContent>
+                      <EmployeeAvatar image={x.image} name={`${x.firstName} ${x.lastName}`} size={72} style={{ marginBottom: 12 }} />
                       <Typography gutterBottom variant="h5">
                         {`${x.lastName} ${x.firstName} ${x.middleName} ${x.suffix}`}
                       </Typography>
@@ -705,6 +735,7 @@ const Employee = () => {
                         Department: {x.department} <br />
                         Gender: {x.gender} <br />
                         Contact No: {x.contactNo} <br />
+                        Birthday: {x.birthDate ? moment(x.birthDate).format('MMM DD, YYYY') : 'Not set'} <br />
                         Address: {x.address}
                       </Typography>
                     </CardContent>
@@ -735,24 +766,26 @@ const Employee = () => {
                       border: '1px solid #ccc',
                       position: 'sticky',
                       left: 0,
-                      backgroundColor: '#fff',
+                      backgroundColor: 'var(--app-bg-paper)',
                       zIndex: 3,
                     }}
                   >
-                    Name
+                    Profile
                   </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Employee No</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Department</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Gender</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Contact</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Address</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', border: '1px solid #ccc' }}>Birthday</TableCell>
                   <TableCell
                     sx={{
                       fontWeight: 'bold',
                       border: '1px solid #ccc',
                       position: 'sticky',
                       right: 0,
-                      backgroundColor: '#fff',
+                      backgroundColor: 'var(--app-bg-paper)',
                       zIndex: 3,
                     }}
                   >
@@ -768,23 +801,25 @@ const Employee = () => {
                         border: '1px solid #ccc',
                         position: 'sticky',
                         left: 0,
-                        backgroundColor: '#fff',
+                        backgroundColor: 'var(--app-bg-paper)',
                         zIndex: 1,
                       }}
                     >
-                      {`${x.lastName} ${x.firstName} ${x.middleName} ${x.suffix}`}
+                      <EmployeeAvatar image={x.image} name={`${x.firstName} ${x.lastName}`} />
                     </TableCell>
+                    <TableCell sx={{ border: '1px solid #ccc' }}>{`${x.lastName} ${x.firstName} ${x.middleName} ${x.suffix}`}</TableCell>
                     <TableCell sx={{ border: '1px solid #ccc' }}>{x.employeeNo}</TableCell>
                     <TableCell sx={{ border: '1px solid #ccc' }}>{x.department}</TableCell>
                     <TableCell sx={{ border: '1px solid #ccc' }}>{x.gender}</TableCell>
                     <TableCell sx={{ border: '1px solid #ccc' }}>{x.contactNo}</TableCell>
                     <TableCell sx={{ border: '1px solid #ccc' }}>{x.address}</TableCell>
+                    <TableCell sx={{ border: '1px solid #ccc' }}>{x.birthDate ? moment(x.birthDate).format('MMM DD, YYYY') : ''}</TableCell>
                     <TableCell
                       sx={{
                         border: '1px solid #ccc',
                         position: 'sticky',
                         right: 0,
-                        backgroundColor: '#fff',
+                        backgroundColor: 'var(--app-bg-paper)',
                         zIndex: 1,
                       }}
                     >
@@ -831,7 +866,7 @@ const Employee = () => {
         <Fade in={addModal}>
           <div
             style={{
-              background: '#ffffff',
+              background: 'var(--app-bg-paper)',
               borderRadius: 20,
               padding: '30px 25px',
               width: '90%',
@@ -897,13 +932,19 @@ const Employee = () => {
 
               <label style={{ fontSize: 14, fontWeight: 500 }}>Address</label>
               <TextField fullWidth variant="outlined" size="small" value={address} onChange={e => setAddress(e.target.value)} placeholder="Address" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Birthday</label>
+              <TextField fullWidth type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Employee Image</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><EmployeeAvatar image={image} name={`${firstName} ${lastName}`} size={64} /><Button component="label" variant="outlined">Upload Image<input hidden type="file" accept="image/*" onChange={handleImageFile} /></Button>{image && <Button color="secondary" onClick={() => setImage('')}>Remove</Button>}</div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 onClick={handleCloseAddModal}
-                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+                style={{ flex: '1 1 45%', borderRadius: 10, color: 'var(--app-text-secondary)', borderColor: 'var(--app-border)', textTransform: 'none' }}
               >
                 Cancel
               </Button>
@@ -934,7 +975,7 @@ const Employee = () => {
         <Fade in={editModal}>
           <div
             style={{
-              background: '#ffffff',
+              background: 'var(--app-bg-paper)',
               borderRadius: 20,
               padding: '30px 25px',
               width: '90%',
@@ -1000,13 +1041,19 @@ const Employee = () => {
 
               <label style={{ fontSize: 14, fontWeight: 500 }}>Address</label>
               <TextField fullWidth variant="outlined" size="small" value={address} onChange={e => setAddress(e.target.value)} placeholder="Address" />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Birthday</label>
+              <TextField fullWidth type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} InputLabelProps={{ shrink: true }} />
+
+              <label style={{ fontSize: 14, fontWeight: 500 }}>Employee Image</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><EmployeeAvatar image={image} name={`${firstName} ${lastName}`} size={64} /><Button component="label" variant="outlined">Change Image<input hidden type="file" accept="image/*" onChange={handleImageFile} /></Button>{image && <Button color="secondary" onClick={() => setImage('')}>Remove</Button>}</div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 onClick={handleCloseEditModal}
-                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+                style={{ flex: '1 1 45%', borderRadius: 10, color: 'var(--app-text-secondary)', borderColor: 'var(--app-border)', textTransform: 'none' }}
               >
                 Cancel
               </Button>
@@ -1037,7 +1084,7 @@ const Employee = () => {
         <Fade in={deletePopup}>
           <div
             style={{
-              background: '#ffffff',
+              background: 'var(--app-bg-paper)',
               borderRadius: 20,
               padding: '30px 25px',
               width: '90%',
@@ -1062,7 +1109,7 @@ const Employee = () => {
               <Button
                 variant="outlined"
                 onClick={handleCloseDeleteModal}
-                style={{ flex: '1 1 45%', borderRadius: 10, color: '#555', borderColor: '#ccc', textTransform: 'none' }}
+                style={{ flex: '1 1 45%', borderRadius: 10, color: 'var(--app-text-secondary)', borderColor: 'var(--app-border)', textTransform: 'none' }}
               >
                 Cancel
               </Button>

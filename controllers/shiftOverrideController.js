@@ -33,6 +33,7 @@ const assignOverride = async (request, response) => {
                 conflicts.push({
                     employeeId: empId,
                     employeeName: emp ? `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName}`.trim() : `#${empId}`,
+                    image: emp ? emp.Image || "" : "",
                     existing: overlapping.map(o => ({
                         shiftName: o.ShiftName,
                         startDate: moment(o.StartDate).format("MM/DD/YYYY"),
@@ -83,6 +84,7 @@ const listOverrides = async (request, response) => {
                 employeeId: o.EmployeeId,
                 employeeNo: emp ? emp.EmployeeNo : "",
                 employeeName: emp ? `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName}`.trim() : "",
+                image: emp ? emp.Image || "" : "",
                 shiftName: o.ShiftName,
                 timeStart: o.TimeStart,
                 timeEnd: o.TimeEnd,

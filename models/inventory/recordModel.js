@@ -5,6 +5,7 @@ const { getPool, sql } = require("../../config/db");
 const SELECT_JOINED = `
     SELECT r.*, t.Name AS ToolName, t.SerialNo AS SerialNo,
            e.EmployeeNo AS EmployeeNo,
+           e.Image AS EmployeeImage,
            LTRIM(RTRIM(CONCAT(e.FirstName, ' ', e.MiddleName, ' ', e.LastName))) AS EmployeeName,
            p.ProjectName AS ProjectName
     FROM Records r

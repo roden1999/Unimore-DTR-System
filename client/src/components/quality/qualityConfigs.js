@@ -1,0 +1,28 @@
+export const inspectionConfig={resource:'inspections',title:'Quality Inspection',subtitle:'Record incoming, production and final-release inspections.',fields:[
+ {name:'InspectionNo',label:'Inspection No.',required:true},{name:'InspectionType',label:'Inspection Stage',type:'select',options:['Incoming','Production','Final'],required:true,defaultValue:'Production'},
+ {name:'ReferenceType',label:'Reference Type',type:'select',options:['Purchase Order','Coil','Production Batch','Delivery','Other'],defaultValue:'Production Batch'},{name:'ReferenceNo',label:'Reference / Batch No.'},
+ {name:'ProductName',label:'Product / Material',required:true},{name:'SupplierOrSource',label:'Supplier / Production Source'},{name:'Quantity',label:'Quantity',type:'number'},{name:'Unit',label:'Unit',type:'select',options:['pcs','kg','tons','meters','sheets','coils']},
+ {name:'InspectionDate',label:'Inspection Date',type:'date',required:true},{name:'InspectorName',label:'Inspector'},
+ {name:'GaugeActual',label:'Actual Gauge',type:'number'},{name:'WidthActual',label:'Actual Width',type:'number'},{name:'ThicknessActual',label:'Actual Thickness',type:'number'},{name:'WeightActual',label:'Actual Weight',type:'number'},
+ {name:'Result',label:'Decision',type:'select',options:['Pending','Passed','On Hold','Rejected'],defaultValue:'Pending'},{name:'Findings',label:'Findings / Defects',type:'multiline'},{name:'Notes',label:'Notes',type:'multiline'}
+],columns:[{name:'InspectionNo',label:'Inspection No.'},{name:'InspectionType',label:'Stage'},{name:'ReferenceNo',label:'Reference'},{name:'ProductName',label:'Product',width:180},{name:'InspectionDate',label:'Date',type:'date'},{name:'InspectorName',label:'Inspector'},{name:'Result',label:'Decision',type:'status'}]};
+
+export const ncrConfig={resource:'ncrs',title:'Non-Conformance Report',subtitle:'Control defects, affected quantities and material disposition.',fields:[
+ {name:'NCRNo',label:'NCR No.',required:true},{name:'InspectionId',label:'Related Inspection',type:'relation',endpoint:'quality/inspections',valueKey:'Id',labelKeys:['InspectionNo','ProductName']},{name:'ReferenceNo',label:'Batch / Reference No.'},
+ {name:'DefectType',label:'Defect Type',required:true},{name:'Description',label:'Non-Conformance Description',type:'multiline',required:true},{name:'QuantityAffected',label:'Quantity Affected',type:'number'},
+ {name:'Severity',label:'Severity',type:'select',options:['Minor','Major','Critical'],defaultValue:'Minor'},{name:'Disposition',label:'Disposition',type:'select',options:['Pending Review','Use As Is','Rework','Return to Supplier','Scrap','Sort / Segregate']},
+ {name:'Owner',label:'Responsible Person'},{name:'TargetDate',label:'Target Date',type:'date'},{name:'Status',label:'Status',type:'select',options:['Open','Under Review','Action Required','Closed','Cancelled'],defaultValue:'Open'},{name:'Evidence',label:'Defect Evidence',type:'image'}
+],columns:[{name:'NCRNo',label:'NCR No.'},{name:'InspectionNo',label:'Inspection'},{name:'ReferenceNo',label:'Reference'},{name:'DefectType',label:'Defect',width:180},{name:'QuantityAffected',label:'Affected Qty'},{name:'Severity',label:'Severity',type:'status'},{name:'Evidence',label:'Evidence',type:'evidence'},{name:'Owner',label:'Owner'},{name:'TargetDate',label:'Target',type:'date'},{name:'Status',label:'Status',type:'status'}]};
+
+export const actionConfig={resource:'actions',title:'Corrective Action',subtitle:'Track root causes, corrective work and effectiveness verification.',fields:[
+ {name:'CARNo',label:'CAR No.',required:true},{name:'NCRId',label:'Related NCR',type:'relation',endpoint:'quality/ncrs',valueKey:'Id',labelKeys:['NCRNo','DefectType']},{name:'RootCause',label:'Root-Cause Analysis',type:'multiline'},
+ {name:'ImmediateCorrection',label:'Immediate Correction',type:'multiline'},{name:'CorrectiveAction',label:'Corrective / Preventive Action',type:'multiline',required:true},{name:'Owner',label:'Action Owner'},
+ {name:'DueDate',label:'Due Date',type:'date'},{name:'Status',label:'Status',type:'select',options:['Open','In Progress','For Verification','Verified','Closed','Cancelled'],defaultValue:'Open'},
+ {name:'VerificationNotes',label:'Verification Notes',type:'multiline'},{name:'VerifiedBy',label:'Verified By'},{name:'VerifiedAt',label:'Verification Date',type:'date'}
+],columns:[{name:'CARNo',label:'CAR No.'},{name:'NCRNo',label:'NCR'},{name:'DefectType',label:'Defect'},{name:'Owner',label:'Owner'},{name:'DueDate',label:'Due',type:'date'},{name:'Status',label:'Status',type:'status'},{name:'VerifiedBy',label:'Verified By'}]};
+
+export const standardConfig={resource:'standards',title:'Quality Standard',subtitle:'Define measurable tolerances and inspection methods by product.',fields:[
+ {name:'StandardCode',label:'Standard Code',required:true},{name:'ProductName',label:'Product / Material',required:true},{name:'ParameterName',label:'Quality Parameter',required:true},
+ {name:'NominalValue',label:'Nominal Value',type:'number'},{name:'MinimumValue',label:'Minimum',type:'number'},{name:'MaximumValue',label:'Maximum',type:'number'},{name:'Unit',label:'Unit'},
+ {name:'InspectionMethod',label:'Inspection Method',type:'multiline'},{name:'IsActive',label:'Status',type:'select',options:[{label:'Active',value:true},{label:'Inactive',value:false}],defaultValue:true},{name:'Notes',label:'Notes',type:'multiline'}
+],columns:[{name:'StandardCode',label:'Code'},{name:'ProductName',label:'Product',width:180},{name:'ParameterName',label:'Parameter'},{name:'NominalValue',label:'Nominal'},{name:'MinimumValue',label:'Min'},{name:'MaximumValue',label:'Max'},{name:'Unit',label:'Unit'},{name:'IsActive',label:'Status',type:'active'}]};

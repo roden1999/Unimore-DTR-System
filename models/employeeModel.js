@@ -78,7 +78,7 @@ const countAll = async (departmentIds = []) => {
     return result.recordset[0].total;
 };
 
-const create = async ({ employeeNo, firstName, middleName, lastName, suffix, departmentId, contactNo, gender, address }) => {
+const create = async ({ employeeNo, firstName, middleName, lastName, suffix, departmentId, contactNo, gender, address, image, birthDate }) => {
     const pool = getPool();
     const result = await pool.request()
         .input("EmployeeNo", sql.NVarChar, employeeNo)
@@ -90,13 +90,15 @@ const create = async ({ employeeNo, firstName, middleName, lastName, suffix, dep
         .input("ContactNo", sql.NVarChar, contactNo || "")
         .input("Gender", sql.NVarChar, gender || "")
         .input("Address", sql.NVarChar, address || "")
-        .query(`INSERT INTO Employees (EmployeeNo, FirstName, MiddleName, LastName, Suffix, DepartmentId, ContactNo, Gender, Address, IsDeleted)
+        .input("Image", sql.NVarChar(sql.MAX), image || null)
+        .input("BirthDate", sql.Date, birthDate ? new Date(birthDate) : null)
+        .query(`INSERT INTO Employees (EmployeeNo, FirstName, MiddleName, LastName, Suffix, DepartmentId, ContactNo, Gender, Address, Image, BirthDate, IsDeleted)
                 OUTPUT INSERTED.Id, INSERTED.EmployeeNo, INSERTED.FirstName
-                VALUES (@EmployeeNo, @FirstName, @MiddleName, @LastName, @Suffix, @DepartmentId, @ContactNo, @Gender, @Address, 0)`);
+                VALUES (@EmployeeNo, @FirstName, @MiddleName, @LastName, @Suffix, @DepartmentId, @ContactNo, @Gender, @Address, @Image, @BirthDate, 0)`);
     return result.recordset[0];
 };
 
-const update = async (id, { employeeNo, firstName, middleName, lastName, suffix, departmentId, contactNo, gender, address }) => {
+const update = async (id, { employeeNo, firstName, middleName, lastName, suffix, departmentId, contactNo, gender, address, image, birthDate }) => {
     const pool = getPool();
     const result = await pool.request()
         .input("Id", sql.Int, id)
@@ -109,9 +111,11 @@ const update = async (id, { employeeNo, firstName, middleName, lastName, suffix,
         .input("ContactNo", sql.NVarChar, contactNo || "")
         .input("Gender", sql.NVarChar, gender || "")
         .input("Address", sql.NVarChar, address || "")
+        .input("Image", sql.NVarChar(sql.MAX), image || null)
+        .input("BirthDate", sql.Date, birthDate ? new Date(birthDate) : null)
         .query(`UPDATE Employees SET EmployeeNo=@EmployeeNo, FirstName=@FirstName, MiddleName=@MiddleName,
                 LastName=@LastName, Suffix=@Suffix, DepartmentId=@DepartmentId, ContactNo=@ContactNo,
-                Gender=@Gender, Address=@Address
+                Gender=@Gender, Address=@Address, Image=@Image, BirthDate=@BirthDate
                 OUTPUT INSERTED.* WHERE Id = @Id`);
     return result.recordset[0];
 };
@@ -123,8 +127,49 @@ const softDelete = async (id) => {
         .query("UPDATE Employees SET IsDeleted = 1 WHERE Id = @Id");
 };
 
+const getDashboardMetrics = async () => {
+    const pool = getPool();
+    const result = await pool.request().query(`
+        SELECT
+            SUM(CASE WHEN IsDeleted = 0 THEN 1 ELSE 0 END) AS ActiveEmployees,
+            SUM(CASE WHEN IsDeleted = 1 THEN 1 ELSE 0 END) AS ResignedEmployees,
+            COUNT(*) AS TotalEmployees
+        FROM Employees;
+
+        SELECT COUNT(*) AS TotalDepartments FROM Departments WHERE IsDeleted = 0;
+
+        SELECT TOP 10 Id, EmployeeNo, FirstName, MiddleName, LastName, Image, BirthDate,
+            DATEADD(YEAR,
+                DATEDIFF(YEAR, BirthDate, GETDATE()) +
+                CASE WHEN DATEADD(YEAR, DATEDIFF(YEAR, BirthDate, GETDATE()), BirthDate) < CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END,
+                BirthDate) AS NextBirthday
+        FROM Employees
+        WHERE IsDeleted = 0 AND BirthDate IS NOT NULL
+        ORDER BY NextBirthday;
+
+        SELECT d.Id, d.Department, COUNT(e.Id) AS EmployeeCount
+        FROM Departments d
+        LEFT JOIN Employees e ON e.DepartmentId = d.Id AND e.IsDeleted = 0
+        WHERE d.IsDeleted = 0
+        GROUP BY d.Id, d.Department
+        ORDER BY EmployeeCount DESC, d.Department;
+
+        SELECT COUNT(*) AS CorrectionsThisMonth
+        FROM DtrCorrections
+        WHERE [Date] >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)
+          AND [Date] < DATEADD(MONTH, 1, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1));
+    `);
+    return {
+        workforce: result.recordsets[0][0],
+        departments: result.recordsets[1][0],
+        upcomingBirthdays: result.recordsets[2],
+        departmentDistribution: result.recordsets[3],
+        corrections: result.recordsets[4][0],
+    };
+};
+
 module.exports = {
     findByEmployeeNo, findById, getAll, getByIds, getByDepartmentIds,
     getByIdsAndDepartments, getPaginated, getPaginatedByIds, countAll,
-    create, update, softDelete
+    create, update, softDelete, getDashboardMetrics
 };

@@ -150,6 +150,7 @@ const payrollList = async (request, response) => {
                 _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim(),
+                image: emp.Image || "",
                 department: dept ? dept.Department : "",
                 salary: totalMonthly.toFixed(2),
                 basicMetalAsia: basicMetalAsia.toFixed(2),

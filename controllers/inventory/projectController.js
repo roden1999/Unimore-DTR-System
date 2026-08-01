@@ -19,6 +19,7 @@ const shapeBorrowedTool = (r) => ({
     SerialNo: r.SerialNo,
     EmployeeId: r.EmployeeId,
     EmployeeName: r.EmployeeName,
+    EmployeeImage: r.EmployeeImage || "",
     DateBorrowed: r.DateBorrowed,
     DateReturned: r.DateReturned,
     Status: r.Status,

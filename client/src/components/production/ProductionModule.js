@@ -5,7 +5,8 @@ import {
     Badge, Fab
 } from '@material-ui/core';
 import {
-    Receipt, ExpandLess, ExpandMore, NoteAdd, ListAlt, AccountCircle, Home, Dialpad
+    Receipt, ExpandLess, ExpandMore, NoteAdd, ListAlt, AccountCircle, Home, Dialpad,
+    Category, Adjust, DonutSmall, BarChart, Straighten, DeviceHub, History, Assignment
 } from '@material-ui/icons';
 import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
@@ -13,7 +14,16 @@ import { makeStyles } from '@material-ui/core/styles';
 import CreateDR from './CreateDR';
 import DRList from './DRList';
 import FloatingCalculator from './FloatingCalculator';
+import CoilInventory from './CoilInventory';
+import SkelpInventory from './SkelpInventory';
+import GaugeChart from './GaugeChart';
+import RoofLength from './RoofLength';
 import UserContext from '../context/userContext';
+import NotificationBell from '../common/NotificationBell';
+import WorkflowBoard from '../workflows/WorkflowBoard';
+import { traceabilityConfig } from '../workflows/workflowConfigs';
+import CalculationHistory from './CalculationHistory';
+import SalesJobOrders from './SalesJobOrders';
 
 const drawerWidth = 240;
 
@@ -22,12 +32,12 @@ const useStyles = makeStyles((theme) => ({
     appBar: { zIndex: theme.zIndex.drawer + 1 },
     appBarShift: { marginLeft: drawerWidth, width: `calc(100% - ${drawerWidth}px)` },
     menuButton: { marginRight: theme.spacing(2) },
-    drawerPaper: { width: drawerWidth, backgroundColor: '#FFFFFF' },
+    drawerPaper: { width: drawerWidth, backgroundColor: theme.palette.background.paper },
     toolbar: theme.mixins.toolbar,
-    content: { flexGrow: 1, padding: theme.spacing(3), backgroundColor: '#F4F6FB', minHeight: '100vh', marginLeft: 0, transition: 'margin .3s' },
+    content: { flexGrow: 1, minWidth: 0, padding: theme.spacing(3), backgroundColor: theme.palette.background.default, minHeight: '100vh', marginLeft: 0, transition: 'margin .3s' },
     contentShift: { marginLeft: drawerWidth },
-    navItem: { margin: '4px 12px', borderRadius: 10, color: '#4B5563', '& .MuiListItemIcon-root': { minWidth: 40, color: '#6B7280' } },
-    subItem: { paddingLeft: 40, margin: '2px 12px', borderRadius: 10, color: '#4B5563' },
+    navItem: { margin: '4px 12px', borderRadius: 10, color: theme.palette.text.secondary, '& .MuiListItemIcon-root': { minWidth: 40, color: theme.palette.text.secondary } },
+    subItem: { paddingLeft: 40, margin: '2px 12px', borderRadius: 10, color: theme.palette.text.secondary },
     navItemActive: {
         backgroundColor: 'rgba(245,158,11,0.14)', color: '#B45309',
         '& .MuiListItemIcon-root': { color: '#F59E0B' },
@@ -41,6 +51,13 @@ const useStyles = makeStyles((theme) => ({
 const PATH_TO_PAGE = {
     '/production/create-dr': 'Create DR',
     '/production/dr-list': 'DR List',
+    '/production/inventory/coil': 'Coil Inventory',
+    '/production/inventory/skelp': 'Skelp Inventory',
+    '/production/gauge-chart': 'Gauge Chart',
+    '/production/roof-length': 'Roof Length',
+    '/production/traceability': 'Traceability',
+    '/production/calculation-history': 'Calculation History',
+    '/production/job-orders': 'Customer Job Orders',
 };
 
 function ProductionModule({ path, navigate, onExitModule }) {
@@ -53,6 +70,7 @@ function ProductionModule({ path, navigate, onExitModule }) {
     const [role, setRole] = useState('');
     const [anchorEl, setAnchorEl] = useState(null);
     const [drOpen, setDrOpen] = useState(true);
+    const [inventoryOpen, setInventoryOpen] = useState(path.startsWith('/production/inventory'));
     const [calcOpen, setCalcOpen] = useState(false);
 
     const pageName = PATH_TO_PAGE[path] || 'Create DR';
@@ -79,6 +97,9 @@ function ProductionModule({ path, navigate, onExitModule }) {
                 PRODUCTION
             </Typography>
             <List>
+                <ListItem button className={`${classes.navItem} ${path === '/production/job-orders' ? classes.navItemActive : ''}`} onClick={() => go('/production/job-orders')}>
+                    <ListItemIcon><Assignment /></ListItemIcon><ListItemText primary="Customer Job Orders" />
+                </ListItem>
                 <ListItem button className={classes.navItem} onClick={() => setDrOpen((o) => !o)}>
                     <ListItemIcon><Receipt /></ListItemIcon>
                     <ListItemText primary="Daily Receipt" />
@@ -96,6 +117,33 @@ function ProductionModule({ path, navigate, onExitModule }) {
                         </ListItem>
                     </List>
                 </Collapse>
+                <ListItem button className={classes.navItem} onClick={() => setInventoryOpen((open) => !open)}>
+                    <ListItemIcon><Category /></ListItemIcon>
+                    <ListItemText primary="Inventory" />
+                    {inventoryOpen ? <ExpandLess /> : <ExpandMore />}
+                </ListItem>
+                <Collapse in={inventoryOpen} timeout="auto" unmountOnExit>
+                    <List disablePadding>
+                        <ListItem button className={subActive('/production/inventory/coil')} onClick={() => go('/production/inventory/coil')}>
+                            <ListItemIcon><Adjust /></ListItemIcon>
+                            <ListItemText primary="Coil" />
+                        </ListItem>
+                        <ListItem button className={subActive('/production/inventory/skelp')} onClick={() => go('/production/inventory/skelp')}>
+                            <ListItemIcon><DonutSmall /></ListItemIcon>
+                            <ListItemText primary="Skelp" />
+                        </ListItem>
+                    </List>
+                </Collapse>
+                <ListItem button className={`${classes.navItem} ${path === '/production/gauge-chart' ? classes.navItemActive : ''}`} onClick={() => go('/production/gauge-chart')}>
+                    <ListItemIcon><BarChart /></ListItemIcon>
+                    <ListItemText primary="Gauge Chart" />
+                </ListItem>
+                <ListItem button className={`${classes.navItem} ${path === '/production/roof-length' ? classes.navItemActive : ''}`} onClick={() => go('/production/roof-length')}>
+                    <ListItemIcon><Straighten /></ListItemIcon>
+                    <ListItemText primary="Roof Length" />
+                </ListItem>
+                <ListItem button className={`${classes.navItem} ${path === '/production/traceability' ? classes.navItemActive : ''}`} onClick={() => go('/production/traceability')}><ListItemIcon><DeviceHub /></ListItemIcon><ListItemText primary="Traceability" /></ListItem>
+                <ListItem button className={`${classes.navItem} ${path === '/production/calculation-history' ? classes.navItemActive : ''}`} onClick={() => go('/production/calculation-history')}><ListItemIcon><History /></ListItemIcon><ListItemText primary="Calculation History" /></ListItem>
             </List>
         </div>
     );
@@ -113,6 +161,7 @@ function ProductionModule({ path, navigate, onExitModule }) {
                     <Tooltip title="Back to Modules">
                         <IconButton color="inherit" onClick={() => onExitModule && onExitModule()}><Home /></IconButton>
                     </Tooltip>
+                    <NotificationBell navigate={navigate} />
                     <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)}>
                         <Badge variant="dot" classes={{ badge: classes.customBadge }}>
                             <Avatar className={classes.userAvatar}>{name ? name.charAt(0).toUpperCase() : <AccountCircle />}</Avatar>
@@ -142,6 +191,13 @@ function ProductionModule({ path, navigate, onExitModule }) {
                 <div className={classes.toolbar} />
                 {pageName === 'Create DR' && <CreateDR />}
                 {pageName === 'DR List' && <DRList />}
+                {pageName === 'Coil Inventory' && <CoilInventory />}
+                {pageName === 'Skelp Inventory' && <SkelpInventory />}
+                {pageName === 'Gauge Chart' && <GaugeChart />}
+                {pageName === 'Roof Length' && <RoofLength />}
+                {pageName === 'Traceability' && <WorkflowBoard {...traceabilityConfig} />}
+                {pageName === 'Calculation History' && <CalculationHistory />}
+                {pageName === 'Customer Job Orders' && <SalesJobOrders />}
             </main>
 
             {/* Floating calculator — persists while inside Production */}

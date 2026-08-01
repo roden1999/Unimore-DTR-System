@@ -29,12 +29,13 @@ import {
 } from '@material-ui/pickers';
 import { Save, Edit, Delete, Add, PictureAsPdf, Print } from '@material-ui/icons/';
 import { useSpring, animated } from 'react-spring';
-import Select from 'react-select';
+import Select from '../common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { TextField } from '@material-ui/core';
 import { DropzoneDialog } from 'material-ui-dropzone'
 import * as XLSX from "xlsx";
+import EmployeeAvatar from '../common/EmployeeAvatar';
 
 //import pdfmake
 import pdfMake from 'pdfmake/build/pdfmake.js';
@@ -48,7 +49,7 @@ const moment = require("moment");
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
-        backgroundColor: 'white',
+        backgroundColor: theme.palette.background.paper,
         padding: 20,
         borderRadius: 10,
         height: '100%',
@@ -264,6 +265,7 @@ const DetailedLogs = () => {
             id: x._id,
             employeeNo: x.employeeNo,
             employeeName: x.employeeName,
+            image: x.image || '',
             department: x.department,
             timeLogs: x.timeLogs,
             totalDays: x.totalDays,
@@ -851,7 +853,7 @@ const DetailedLogs = () => {
                 style={{ float: 'right', marginRight: 10 }}
             />
 
-            <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '68vh', maxHeight: '68vh', overflowY: 'scroll' }}>
+            <div style={{ padding: 10, backgroundColor: 'var(--app-bg-subtle)', marginTop: 60, height: '100', minHeight: '68vh', maxHeight: '68vh', overflowY: 'scroll' }}>
                 <Grid container spacing={3}>
                     {Array.isArray(logList) && logList.length > 0 && !loader
                         ? logList.map((x, idx) => (
@@ -869,18 +871,12 @@ const DetailedLogs = () => {
                                             Print Logs
                                         </Button>
 
-                                        <Typography style={{ fontSize: 14 }} color="textSecondary" gutterBottom>
-                                            {x?.employeeNo || ""}
-                                        </Typography>
-                                        <Typography variant="h5" component="h2">
-                                            {x?.employeeName || ""}
-                                        </Typography>
-                                        <Typography color="textSecondary">{x?.department || ""}</Typography>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><EmployeeAvatar image={x.image} name={x.employeeName} size={56} /><div><Typography style={{ fontSize: 14 }} color="textSecondary">{x?.employeeNo || ""}</Typography><Typography variant="h5">{x?.employeeName || ""}</Typography><Typography color="textSecondary">{x?.department || ""}</Typography></div></div>
 
                                         <div
                                             style={{
                                                 padding: 10,
-                                                backgroundColor: "#F4F4F4",
+                                                backgroundColor: 'var(--app-bg-subtle)',
                                                 marginTop: 10,
                                                 minHeight: "40vh",
                                                 maxHeight: "40vh",

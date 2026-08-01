@@ -1,0 +1,99 @@
+/* Idempotent workflow/management upgrade for Unimore DTR System. */
+IF OBJECT_ID('AuditLogs', 'U') IS NULL
+CREATE TABLE AuditLogs (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NULL, UserName NVARCHAR(150) NULL,
+    Action NVARCHAR(40) NOT NULL, Module NVARCHAR(60) NOT NULL,
+    EntityType NVARCHAR(80) NOT NULL, EntityId NVARCHAR(80) NULL,
+    Description NVARCHAR(500) NULL, OldValues NVARCHAR(MAX) NULL,
+    NewValues NVARCHAR(MAX) NULL, IpAddress NVARCHAR(80) NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+IF OBJECT_ID('Notifications', 'U') IS NULL
+CREATE TABLE Notifications (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    UserId INT NULL, TargetRole NVARCHAR(50) NULL,
+    Title NVARCHAR(180) NOT NULL, Message NVARCHAR(700) NULL,
+    Type NVARCHAR(30) NOT NULL DEFAULT 'info', Module NVARCHAR(60) NULL,
+    Link NVARCHAR(250) NULL, IsRead BIT NOT NULL DEFAULT 0,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+IF OBJECT_ID('ApprovalRequests', 'U') IS NULL
+CREATE TABLE ApprovalRequests (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    Module NVARCHAR(60) NOT NULL, EntityType NVARCHAR(80) NOT NULL,
+    EntityId NVARCHAR(80) NOT NULL, RequestedByUserId INT NULL,
+    RequestedByName NVARCHAR(150) NULL, Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+    Reason NVARCHAR(700) NULL, ReviewedByUserId INT NULL,
+    ReviewedByName NVARCHAR(150) NULL, ReviewNote NVARCHAR(700) NULL,
+    RequestedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), ReviewedAt DATETIME2 NULL
+);
+
+IF OBJECT_ID('LeaveRequests', 'U') IS NULL
+CREATE TABLE LeaveRequests (
+    Id INT IDENTITY(1,1) PRIMARY KEY, EmployeeId INT NOT NULL,
+    LeaveType NVARCHAR(50) NOT NULL, StartDate DATE NOT NULL, EndDate DATE NOT NULL,
+    Reason NVARCHAR(700) NULL, Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+    CreatedBy INT NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NULL
+);
+
+IF OBJECT_ID('OvertimeRequests', 'U') IS NULL
+CREATE TABLE OvertimeRequests (
+    Id INT IDENTITY(1,1) PRIMARY KEY, EmployeeId INT NOT NULL,
+    WorkDate DATE NOT NULL, Hours DECIMAL(8,2) NOT NULL,
+    Reason NVARCHAR(700) NULL, Status NVARCHAR(20) NOT NULL DEFAULT 'Pending',
+    CreatedBy INT NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NULL
+);
+
+IF OBJECT_ID('MaintenanceWorkOrders', 'U') IS NULL
+CREATE TABLE MaintenanceWorkOrders (
+    Id INT IDENTITY(1,1) PRIMARY KEY, WorkOrderNo NVARCHAR(40) NOT NULL,
+    AssetName NVARCHAR(180) NOT NULL, Description NVARCHAR(700) NULL,
+    Priority NVARCHAR(20) NOT NULL DEFAULT 'Normal', AssignedTo NVARCHAR(150) NULL,
+    DueDate DATE NULL, Status NVARCHAR(30) NOT NULL DEFAULT 'Open',
+    CreatedBy INT NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NULL
+);
+
+IF OBJECT_ID('PreventiveMaintenance', 'U') IS NULL
+CREATE TABLE PreventiveMaintenance (
+    Id INT IDENTITY(1,1) PRIMARY KEY, AssetName NVARCHAR(180) NOT NULL,
+    TaskName NVARCHAR(250) NOT NULL, FrequencyDays INT NOT NULL,
+    LastServiceDate DATE NULL, NextServiceDate DATE NOT NULL,
+    AssignedTo NVARCHAR(150) NULL, Status NVARCHAR(30) NOT NULL DEFAULT 'Scheduled',
+    CreatedBy INT NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NULL
+);
+
+IF OBJECT_ID('ProductionTraceability', 'U') IS NULL
+CREATE TABLE ProductionTraceability (
+    Id INT IDENTITY(1,1) PRIMARY KEY, BatchNo NVARCHAR(60) NOT NULL,
+    CoilReference NVARCHAR(120) NULL, SkelpReference NVARCHAR(120) NULL,
+    FinishedProduct NVARCHAR(180) NULL, Quantity DECIMAL(18,3) NULL,
+    ProductionDate DATE NOT NULL, Status NVARCHAR(30) NOT NULL DEFAULT 'In Process',
+    Notes NVARCHAR(700) NULL, CreatedBy INT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NULL
+);
+
+IF OBJECT_ID('PayrollPeriods', 'U') IS NULL
+CREATE TABLE PayrollPeriods (
+    Id INT IDENTITY(1,1) PRIMARY KEY, PeriodName NVARCHAR(100) NOT NULL,
+    StartDate DATE NOT NULL, EndDate DATE NOT NULL,
+    Status NVARCHAR(20) NOT NULL DEFAULT 'Draft', LockedAt DATETIME2 NULL,
+    LockedBy INT NULL, Notes NVARCHAR(700) NULL, CreatedBy INT NULL,
+    CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NULL
+);
+
+IF OBJECT_ID('CalculatorHistory', 'U') IS NULL
+CREATE TABLE CalculatorHistory (
+    Id BIGINT IDENTITY(1,1) PRIMARY KEY, CalculatorType NVARCHAR(40) NOT NULL,
+    InputData NVARCHAR(MAX) NOT NULL, ResultData NVARCHAR(MAX) NOT NULL,
+    CreatedBy INT NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_AuditLogs_CreatedAt')
+CREATE INDEX IX_AuditLogs_CreatedAt ON AuditLogs(CreatedAt DESC);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Notifications_UserRead')
+CREATE INDEX IX_Notifications_UserRead ON Notifications(UserId, IsRead, CreatedAt DESC);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_ApprovalRequests_Status')
+CREATE INDEX IX_ApprovalRequests_Status ON ApprovalRequests(Status, RequestedAt DESC);

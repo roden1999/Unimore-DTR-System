@@ -1,0 +1,11 @@
+const router = require('express').Router();
+const verifyToken = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permission');
+const controller = require('../controllers/itAssetController');
+router.use(verifyToken, requirePermission('it.manage'));
+router.get('/dashboard', controller.dashboard);
+router.get('/', controller.list);
+router.post('/', controller.create);
+router.put('/:id', controller.update);
+router.delete('/:id', controller.remove);
+module.exports = router;

@@ -32,12 +32,13 @@ import {
 } from '@material-ui/pickers';
 import { Save, Edit, Delete, Add, PictureAsPdf, Print, Visibility } from '@material-ui/icons/';
 import { useSpring, animated } from 'react-spring';
-import Select from 'react-select';
+import Select from './common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { TextField } from '@material-ui/core';
 import { DropzoneDialog } from 'material-ui-dropzone'
 import XLSX from "xlsx";
+import EmployeeAvatar from './common/EmployeeAvatar';
 
 //import pdfmake
 import pdfMake from 'pdfmake/build/pdfmake.js';
@@ -50,7 +51,7 @@ const peso = (v) => Number(String(v == null ? 0 : v).replace(/,/g, '')).toLocale
 const nz = (rows) => rows.filter((r) => Number(String(r.v).replace(/,/g, '')) !== 0);
 
 const PayTable = ({ title, headColor, rows, total, totalLabel }) => (
-    <div style={{ border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
+    <div style={{ border: '1px solid var(--app-border)', borderRadius: 10, overflow: 'hidden' }}>
         <div style={{ background: headColor, color: '#fff', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 14 }}>
             <span>{title}</span><span>Amount</span>
         </div>
@@ -58,14 +59,14 @@ const PayTable = ({ title, headColor, rows, total, totalLabel }) => (
             <tbody>
                 {rows.length === 0 && <tr><td style={{ padding: '8px 12px', color: '#94A3B8' }}>None</td></tr>}
                 {rows.map((r, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                    <tr key={i} style={{ borderBottom: '1px solid var(--app-border)' }}>
                         <td style={{ padding: '6px 12px', fontSize: 13 }}>{r.k}</td>
                         <td style={{ padding: '6px 12px', textAlign: 'right', fontSize: 13, whiteSpace: 'nowrap' }}>₱{peso(r.v)}</td>
                     </tr>
                 ))}
             </tbody>
         </table>
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: '#F9FAFB', fontWeight: 700, fontSize: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--app-bg-muted)', fontWeight: 700, fontSize: 14 }}>
             <span>{totalLabel}</span><span>₱{peso(total)}</span>
         </div>
     </div>
@@ -120,7 +121,7 @@ const moment = require("moment");
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
-        backgroundColor: 'white',
+        backgroundColor: theme.palette.background.paper,
         padding: 20,
         borderRadius: 10,
         height: '100%',
@@ -338,6 +339,7 @@ const Payroll = () => {
             id: x._id,
             employeeNo: x.employeeNo,
             employeeName: x.employeeName,
+            image: x.image || '',
             department: x.department,
 
             timeLogs: x.timeLogs,
@@ -1055,7 +1057,7 @@ const Payroll = () => {
                 />
             </div>
 
-            <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '65vh', maxHeight: '65vh', overflowY: 'scroll' }}>
+            <div style={{ padding: 10, backgroundColor: 'var(--app-bg-subtle)', marginTop: 60, height: '100', minHeight: '65vh', maxHeight: '65vh', overflowY: 'scroll' }}>
                 <Grid container spacing={3}>
                     {logList.length !== 0 && loader !== true && logList.map(x =>
                         <Grid item xs={12}>
@@ -1077,17 +1079,9 @@ const Payroll = () => {
                                         startIcon={<Visibility />}
                                         onClick={() => setCompModal(x)}>View Computation</Button>
 
-                                    <Typography style={{ fontSize: 14 }} color="textSecondary" gutterBottom>
-                                        {x.employeeNo}
-                                    </Typography>
-                                    <Typography variant="h5" component="h2">
-                                        {x.employeeName}
-                                    </Typography>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><EmployeeAvatar image={x.image} name={x.employeeName} size={56} /><div><Typography style={{ fontSize: 14 }} color="textSecondary">{x.employeeNo}</Typography><Typography variant="h5">{x.employeeName}</Typography><Typography color="textSecondary">{x.department}</Typography></div></div>
                                     <Typography variant="h5" component="h2" style={{ float: 'right' }}>
                                         {"Period Covered: " + moment(fromDate).format("MMM DD, yyyy") + " - " + moment(toDate).format("MMM DD, yyyy")}
-                                    </Typography>
-                                    <Typography color="textSecondary">
-                                        {x.department}
                                     </Typography>
 
                                     <PayslipBody x={x} />
@@ -1132,26 +1126,26 @@ const Payroll = () => {
                 <DialogTitle>
                     Computation Breakdown
                     {compModal &&
-                        <div style={{ fontSize: 13, color: '#6B7280', fontWeight: 400 }}>
+                        <div style={{ fontSize: 13, color: 'var(--app-text-secondary)', fontWeight: 400 }}>
                             {compModal.employeeName} — {compModal.employeeNo}
                         </div>}
                 </DialogTitle>
                 <DialogContent dividers>
-                    <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 12 }}>
+                    <div style={{ fontSize: 12, color: 'var(--app-text-secondary)', marginBottom: 12 }}>
                         This shows exactly how each figure on the payslip was derived (Unimore / Metal Asia formula).
                         Use it to verify the numbers against attendance and the employee's salary setup.
                     </div>
                     {compModal && compModal.computation && compModal.computation.map((section, si) => (
                         <div key={si} style={{ marginBottom: 18 }}>
-                            <div style={{ fontWeight: 700, color: '#3454D1', borderBottom: '2px solid #EEF1F6', paddingBottom: 4, marginBottom: 6 }}>
+                            <div style={{ fontWeight: 700, color: 'var(--app-primary)', borderBottom: '2px solid var(--app-border)', paddingBottom: 4, marginBottom: 6 }}>
                                 {section.title}
                             </div>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <tbody>
                                     {section.rows.map((row, ri) => (
-                                        <tr key={ri} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                                        <tr key={ri} style={{ borderBottom: '1px solid var(--app-border)' }}>
                                             <td style={{ padding: '6px 8px', width: '32%', fontWeight: row.strong ? 700 : 500, verticalAlign: 'top' }}>{row.label}</td>
-                                            <td style={{ padding: '6px 8px', color: '#6B7280', fontSize: 12, verticalAlign: 'top' }}>{row.detail}</td>
+                                            <td style={{ padding: '6px 8px', color: 'var(--app-text-secondary)', fontSize: 12, verticalAlign: 'top' }}>{row.detail}</td>
                                             <td style={{ padding: '6px 8px', width: '20%', textAlign: 'right', fontWeight: row.strong ? 700 : 500, whiteSpace: 'nowrap' }}>{row.amount}</td>
                                         </tr>
                                     ))}

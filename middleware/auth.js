@@ -9,10 +9,14 @@ const verifyToken = async (request, response, next) => {
 
     try {
         const { payload } = await jwtVerify(token, getSecretKey());
-        request.user = payload;
-        next();
-    } catch (err) {
-        response.status(401).json({ message: "Invalid or expired token" });
+        const user = await userModel.findById(payload._id);
+        const revoked = Number(payload.tokenVersion || 0) !== Number(user?.TokenVersion || 0);
+        if (!user || !user.IsActive || revoked || user.EmployeeIsDeleted && !user.IsSystemAccount)
+            return response.status(401).json({ message: "Your session is no longer valid. Please sign in again." });
+        request.user = { ...payload, role: user.Role, Name: user.Name, UserName: user.UserName };
+        return next();
+    } catch (_error) {
+        return response.status(401).json({ message: "Invalid or expired token" });
     }
 };
 

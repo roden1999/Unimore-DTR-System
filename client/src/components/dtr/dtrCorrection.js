@@ -29,8 +29,9 @@ import { Save, Edit, Delete, Add } from '@material-ui/icons/';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'
 import { useSpring, animated } from 'react-spring';
-import Select from 'react-select';
+import Select from '../common/Dropdown';
 import { TextField } from '@material-ui/core';
+import EmployeeAvatar from '../common/EmployeeAvatar';
 
 const axios = require("axios");
 const moment = require("moment");
@@ -38,7 +39,7 @@ const moment = require("moment");
 const useStyles = makeStyles((theme) => ({
     root: {
         // flexGrow: 1,
-        backgroundColor: 'white',
+        backgroundColor: theme.palette.background.paper,
         padding: 20,
         borderRadius: 10,
         height: '100%',
@@ -99,7 +100,7 @@ const AntSwitch = withStyles((theme) => ({
         border: `1px solid ${theme.palette.grey[500]}`,
         borderRadius: 16 / 2,
         opacity: 1,
-        backgroundColor: theme.palette.common.white,
+        backgroundColor: theme.palette.background.paper,
     },
     checked: {},
 }))(Switch);
@@ -235,10 +236,10 @@ const StyledTableRow = withStyles((theme) => ({
 
 const DtrCorrection = () => {
     const classes = useStyles();
-    var dtrSemp = JSON.parse(sessionStorage.getItem("dtrSemp"));
-    var dtrSdept = JSON.parse(sessionStorage.getItem("dtrSdept"));
-    var dtrSfromDate = sessionStorage.getItem("dtrSfromDate");
-    var dtrStoDate = sessionStorage.getItem("dtrStoDate");
+    var dtrSemp = JSON.parse(sessionStorage.getItem("dtrSemp") || "{}");
+    var dtrSdept = JSON.parse(sessionStorage.getItem("dtrSdept") || "{}");
+    var dtrSfromDate = sessionStorage.getItem("dtrSfromDate") || moment().startOf('month').format("YYYY-MM-DD");
+    var dtrStoDate = sessionStorage.getItem("dtrStoDate") || moment().format("YYYY-MM-DD");
     const [loader, setLoader] = useState(true);
     const [logData, setLogData] = useState(null);
     const [employeeNo, setEmployeeNo] = useState("")
@@ -257,8 +258,8 @@ const DtrCorrection = () => {
     const [employeeOptions, setEmployeeOptions] = useState(null);
     const [departmentOptions, setDepartmentOptions] = useState(null);
     const [addModal, setAddModal] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState(dtrSemp.emp);
-    const [selectedDepartment, setSelectedDepartment] = useState(dtrSdept.dept);
+    const [selectedEmployee, setSelectedEmployee] = useState(dtrSemp.emp || []);
+    const [selectedDepartment, setSelectedDepartment] = useState(dtrSdept.dept || []);
     const [fromDate, setFromDate] = useState(dtrSfromDate);
     const [toDate, setToDate] = useState(dtrStoDate);
     const [totalEmployee, setTotalEmployee] = useState(0);
@@ -288,19 +289,13 @@ const DtrCorrection = () => {
             .post(url, data)
             .then(function (response) {
                 // handle success
-                if (Array.isArray(response.data)) {
-                    setLogData(response.data);
-                    setLoader(false);
-                } else {
-                    var obj = [];
-                    obj.push(response.data);
-                    setLogData(obj);
-                    setLoader(false);
-                }
+                setLogData(Array.isArray(response.data) ? response.data : []);
+                setLoader(false);
             })
             .catch(function (error) {
                 // handle error
                 console.log(error);
+                setLogData([]);
                 setLoader(false);
             })
             .finally(function () {
@@ -313,8 +308,9 @@ const DtrCorrection = () => {
             id: x._id,
             employeeNo: x.employeeNo,
             employeeName: x.employeeName,
+            image: x.image || '',
             department: x.department,
-            timeLogs: x.timeLogs,
+            timeLogs: Array.isArray(x.timeLogs) ? x.timeLogs : [],
         }))
         : [];
 
@@ -358,16 +354,8 @@ const DtrCorrection = () => {
         : [];
 
     function EmployeeOption(item) {
-        var list = [];
-        if (item !== undefined || item !== null) {
-            item.map((x) => {
-                return list.push({
-                    label: x.name,
-                    value: x.employeeNo,
-                });
-            });
-        }
-        return list;
+        if (!Array.isArray(item)) return [];
+        return item.map((x) => ({ label: x.name, value: x.employeeNo }));
     }
 
     useEffect(() => {
@@ -431,16 +419,8 @@ const DtrCorrection = () => {
         : [];
 
     function DepartmentSearchOption(item) {
-        var list = [];
-        if (item !== undefined || item !== null) {
-            item.map((x) => {
-                return list.push({
-                    label: x.name,
-                    value: x.id,
-                });
-            });
-        }
-        return list;
+        if (!Array.isArray(item)) return [];
+        return item.map((x) => ({ label: x.name, value: x.id }));
     }
 
 
@@ -548,7 +528,7 @@ const DtrCorrection = () => {
             })
             .catch(function (error) {
                 // handle error
-                toast.error(JSON.stringify(error.response.data.error), {
+                toast.error(JSON.stringify(error.response?.data?.error || error.message), {
                     position: "top-center"
                 });
                 setLoader(false);
@@ -677,23 +657,15 @@ const DtrCorrection = () => {
                 style={{ float: 'right', marginRight: 10 }}
             />
 
-            <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100', minHeight: '65vh', maxHeight: '65vh', overflowY: 'scroll' }}>
+            <div style={{ padding: 10, backgroundColor: 'var(--app-bg-subtle)', marginTop: 60, height: '100', minHeight: '65vh', maxHeight: '65vh', overflowY: 'scroll' }}>
                 <Grid container spacing={3}>
                     {logList.length !== 0 && loader !== true && logList.map(x =>
                         <Grid item xs={12}>
                             <Card>
                                 <CardContent>
-                                    <Typography style={{ fontSize: 14 }} color="textSecondary" gutterBottom>
-                                        {x.employeeNo}
-                                    </Typography>
-                                    <Typography variant="h5" component="h2">
-                                        {x.employeeName}
-                                    </Typography>
-                                    <Typography color="textSecondary">
-                                        {x.department}
-                                    </Typography>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><EmployeeAvatar image={x.image} name={x.employeeName} size={56} /><div><Typography style={{ fontSize: 14 }} color="textSecondary">{x.employeeNo}</Typography><Typography variant="h5">{x.employeeName}</Typography><Typography color="textSecondary">{x.department}</Typography></div></div>
 
-                                    <div style={{ padding: 10, backgroundColor: '#F4F4F4', marginTop: 60, height: '100%', minHeight: '40vh', maxHeight: '40vh', overFlowY: 'auto' }}>
+                                    <div style={{ padding: 10, backgroundColor: 'var(--app-bg-subtle)', marginTop: 60, height: '100%', minHeight: '40vh', maxHeight: '40vh', overflowY: 'auto' }}>
                                         <TableContainer className={classes.tbcontainer}>
                                             <Table stickyHeader aria-label="sticky table">
                                                 <TableHead>
@@ -707,7 +679,7 @@ const DtrCorrection = () => {
                                                         <StyledTableCell>Action</StyledTableCell>
                                                     </TableRow>
                                                 </TableHead>
-                                                {x.timeLogs.map(y =>
+                                                {(Array.isArray(x.timeLogs) ? x.timeLogs : []).map(y =>
                                                     <TableBody>
                                                         <StyledTableRow hover role="checkbox" tabIndex={-1} key={y.id}>
                                                             <StyledTableCell>
@@ -790,7 +762,7 @@ const DtrCorrection = () => {
             >
                 <Fade in={addModal}>
                     <div className={classes.modalPaper}>
-                        <div style={{ position: "sticky", top: 0, backgroundColor: "white", zIndex: 2 }}>
+                        <div style={{ position: "sticky", top: 0, backgroundColor: 'var(--app-bg-paper)', zIndex: 2 }}>
                             <h1>Manage Record</h1>
                             <h3>{employeeName}</h3>
                             <h4>{moment(date).format("MMM DD, yyyy")}</h4>
@@ -983,7 +955,7 @@ const DtrCorrection = () => {
 
                                 <br />
 
-                                <div style={{ position: "sticky", bottom: 0, backgroundColor: "white", zIndex: 2 }}>
+                                <div style={{ position: "sticky", bottom: 0, backgroundColor: 'var(--app-bg-paper)', zIndex: 2 }}>
                                     <Button
                                         size="large"
                                         // style={{ float: 'right' }}

@@ -8,13 +8,15 @@ const { connectToSqlServer } = require("./config/db");
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use(fileUpload());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: "5mb" }));
 app.use(express.static(path.join(__dirname, "/app_data")));
 app.use(express.static("client/build"));
+app.use(require('./middleware/optionalAuth'));
+app.use(require('./middleware/auditMiddleware'));
 
 app.use("/login", require("./routes/authRoutes"));
 app.use("/users", require("./routes/userRoutes"));
@@ -27,6 +29,12 @@ app.use("/timelogs", require("./routes/timelogRoutes"));
 app.use("/shifts", require("./routes/shiftRoutes"));
 app.use("/shift-overrides", require("./routes/shiftOverrideRoutes"));
 app.use("/inventory", require("./routes/inventoryRoutes"));
+app.use("/workflow", require("./routes/workflowRoutes"));
+app.use("/it-assets", require("./routes/itAssetRoutes"));
+app.use("/quality", require("./routes/qualityRoutes"));
+app.use("/dispatch", require("./routes/dispatchRoutes"));
+app.use("/sales", require("./routes/salesRoutes"));
+app.use("/utesla", require("./routes/uteslaRoutes"));
 
 // SPA fallback: any non-API GET returns the client so client-side
 // routes (/employee, /department, ...) survive a refresh / deep link.
@@ -34,6 +42,16 @@ app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
 
-connectToSqlServer().then(() => {
+connectToSqlServer().then(async () => {
+    await require('./models/userModel').ensureSchema();
+    await require('./models/workflowModel').ensureSchema();
+    await require('./models/itAssetModel').ensureSchema();
+    await require('./models/qualityModel').ensureSchema();
+    await require('./models/dispatchModel').ensureSchema();
+    await require('./models/salesModel').ensureSchema();
+    await require('./models/uteslaModel').ensureSchema();
     app.listen(PORT, () => console.log("Server Started"));
+}).catch((error) => {
+    console.error('Server startup failed:', error);
+    process.exit(1);
 });

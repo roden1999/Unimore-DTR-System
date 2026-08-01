@@ -1,4 +1,11 @@
 const router = require("express").Router();
+const verifyToken = require('../middleware/auth');
+const { hasPermission } = require('../middleware/permission');
+router.use(verifyToken, (req, res, next) => {
+    const permission = req.path.startsWith('/coils') || req.path.startsWith('/skelps') ? 'production.manage' : 'maintenance.manage';
+    if (!hasPermission(req.user, permission)) return res.status(403).json({ message: 'You do not have permission to access this inventory.' });
+    next();
+});
 
 const tools = require("../controllers/inventory/toolController");
 const consumables = require("../controllers/inventory/consumableController");
@@ -7,6 +14,8 @@ const projects = require("../controllers/inventory/projectController");
 const records = require("../controllers/inventory/recordController");
 const forms = require("../controllers/inventory/consumableFormController");
 const employees = require("../controllers/inventory/inventoryEmployeeController");
+const skelps = require("../controllers/production/skelpController");
+const coils = require("../controllers/production/coilController");
 
 // ---- Tools ----
 router.post("/tools/list", tools.listTools);
@@ -74,5 +83,22 @@ router.get("/employees/search-options", employees.searchOptions);
 router.post("/employees", employees.createEmployee);
 router.put("/employees/:id", employees.updateEmployee);
 router.delete("/employees/:id", employees.deleteEmployee);
+
+// ---- Production Coil / Skelp inventory ----
+// The legacy Coil and Skelp screens are two views over the same Skelps table.
+router.get("/skelps", skelps.list);
+router.get("/skelps/:id", skelps.get);
+router.post("/skelps", skelps.create);
+router.post("/skelps/import", skelps.importRows);
+router.put("/skelps/:id", skelps.update);
+router.delete("/skelps/:id", skelps.remove);
+
+// ---- Production Coils (separate dataset from Skelps) ----
+router.get("/coils", coils.list);
+router.get("/coils/:id", coils.get);
+router.post("/coils", coils.create);
+router.post("/coils/import", coils.importRows);
+router.put("/coils/:id", coils.update);
+router.delete("/coils/:id", coils.remove);
 
 module.exports = router;

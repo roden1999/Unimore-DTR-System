@@ -1,4 +1,7 @@
 const router = require("express").Router();
+const verifyToken = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permission');
+router.use(verifyToken, requirePermission('hr.manage'));
 const { createHoliday, updateHoliday, listHolidays, deleteHoliday } = require("../controllers/holidayController");
 
 router.post("/", createHoliday);

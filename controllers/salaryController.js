@@ -85,6 +85,7 @@ const listSalaries = async (request, response) => {
                 _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim(),
+                image: emp.Image || "",
                 department: dept ? dept.Department : "",
                 salaryId: salary ? salary.Id : "No Salary",
                 salary: salary ? salary.Salary : 0,

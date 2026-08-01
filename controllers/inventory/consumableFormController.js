@@ -19,6 +19,7 @@ const shapeItem = (i) => ({
     Quantity: Number(i.Quantity),
     EmployeeId: i.EmployeeId,
     EmployeeName: i.EmployeeName,
+    EmployeeImage: i.EmployeeImage,
     IssuedBy: i.IssuedBy,
     DateIssued: i.DateIssued,
     Remarks: i.Remarks,

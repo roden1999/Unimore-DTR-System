@@ -12,12 +12,23 @@ GO
 --  Users
 -- ============================================================
 CREATE TABLE Users (
-    Id          INT IDENTITY(1,1) PRIMARY KEY,
-    UserName    NVARCHAR(100)  NOT NULL UNIQUE,
-    Name        NVARCHAR(200)  NOT NULL,
-    Role        NVARCHAR(50)   NOT NULL,
-    Password    NVARCHAR(255)  NOT NULL,
-    CreatedAt   DATETIME       DEFAULT GETDATE()
+    Id                  INT IDENTITY(1,1) PRIMARY KEY,
+    UserName            NVARCHAR(100)  NOT NULL UNIQUE,
+    Name                NVARCHAR(200)  NOT NULL,
+    Role                NVARCHAR(50)   NOT NULL,
+    Password            NVARCHAR(255)  NOT NULL,
+    EmployeeId          INT            NULL,
+    MustChangePassword  BIT            NOT NULL DEFAULT 0,
+    IsActive            BIT            NOT NULL DEFAULT 1,
+    IsSystemAccount     BIT            NOT NULL DEFAULT 0,
+    PasswordChangedAt   DATETIME2      NULL,
+    PasswordResetAt     DATETIME2      NULL,
+    LastLoginAt         DATETIME2      NULL,
+    FailedLoginAttempts INT            NOT NULL DEFAULT 0,
+    LockedUntil         DATETIME2      NULL,
+    TokenVersion        INT            NOT NULL DEFAULT 0,
+    CreatedAt           DATETIME       DEFAULT GETDATE(),
+    UpdatedAt           DATETIME2      NULL
 );
 
 -- ============================================================
@@ -60,6 +71,9 @@ CREATE TABLE Employees (
     IsDeleted     BIT            NOT NULL DEFAULT 0,
     CreatedAt     DATETIME       DEFAULT GETDATE()
 );
+
+ALTER TABLE Users ADD CONSTRAINT FK_Users_Employees FOREIGN KEY (EmployeeId) REFERENCES Employees(Id);
+CREATE UNIQUE INDEX UX_Users_EmployeeId ON Users(EmployeeId) WHERE EmployeeId IS NOT NULL;
 
 -- ============================================================
 --  Time Logs  (raw punch records)

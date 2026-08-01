@@ -1,0 +1,12 @@
+const router=require('express').Router();
+const verifyToken=require('../middleware/auth');
+const {requirePermission}=require('../middleware/permission');
+const controller=require('../controllers/qualityController');
+router.use(verifyToken,requirePermission('quality.manage'));
+router.get('/dashboard',controller.dashboard);
+router.get('/production-batches',controller.productionBatches);
+router.get('/:resource',controller.list);
+router.post('/:resource',controller.create);
+router.put('/:resource/:id',controller.update);
+router.delete('/:resource/:id',controller.remove);
+module.exports=router;

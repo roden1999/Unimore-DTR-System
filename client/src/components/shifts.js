@@ -15,8 +15,8 @@ import 'react-toastify/dist/ReactToastify.css';
 const axios = require("axios");
 const moment = require("moment");
 
-const useStyles = makeStyles(() => ({
-    root: { backgroundColor: 'white', padding: 20, borderRadius: 10, minHeight: '90vh' },
+const useStyles = makeStyles((theme) => ({
+    root: { backgroundColor: theme.palette.background.paper, padding: 20, borderRadius: 10, minHeight: '90vh' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
 }));
 

@@ -9,6 +9,7 @@ import Select from '../common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment';
+import EmployeeAvatar from '../common/EmployeeAvatar';
 import { exportProjectConsumables } from './pdfExport';
 
 const axios = require('axios');
@@ -106,7 +107,7 @@ function ConsumableFormsPage() {
             <ToastContainer />
             <Grid item xs={12} md={4}>
                 <Paper style={{ borderRadius: 14, maxHeight: '82vh', overflowY: 'auto' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: '#F1F5FF' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 12, background: 'var(--app-bg-muted)' }}>
                         <Typography variant="subtitle1" style={{ fontWeight: 700 }}>Projects</Typography>
                         <Button size="small" variant="contained" color="primary" startIcon={<Add />} onClick={openAdd}>Add Form</Button>
                     </div>
@@ -157,7 +158,7 @@ function ConsumableFormsPage() {
                                                     {y.Quantity}
                                                     <IconButton size="small" onClick={() => { setQtyModal({ id: y._id, mode: 'add' }); setQtyVal(0); }}><AddCircle fontSize="small" /></IconButton>
                                                 </TableCell>
-                                                <TableCell>{y.EmployeeName}</TableCell>
+                                                <TableCell><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><EmployeeAvatar image={y.EmployeeImage} name={y.EmployeeName} size={32} />{y.EmployeeName}</div></TableCell>
                                                 <TableCell>{y.IssuedBy}</TableCell>
                                                 <TableCell>{moment(y.DateIssued).format('MMM DD, YYYY')}</TableCell>
                                                 <TableCell>{y.Remarks}</TableCell>
@@ -192,9 +193,9 @@ function ConsumableFormsPage() {
             <Dialog open={itemOpen} onClose={() => setItemOpen(false)} fullWidth maxWidth="xs">
                 <DialogTitle>Add Item</DialogTitle>
                 <DialogContent>
-                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: '#555' }}>Item</div>
+                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: 'var(--app-text-secondary)' }}>Item</div>
                         <Select options={consumableOpts} value={consumable} onChange={setConsumable} placeholder="Item..." /></div>
-                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: '#555' }}>Borrower</div>
+                    <div style={{ marginBottom: 12 }}><div style={{ fontSize: 12, color: 'var(--app-text-secondary)' }}>Borrower</div>
                         <Select options={empOpts} value={emp} onChange={setEmp} placeholder="Borrower..." /></div>
                     <TextField type="number" label="Quantity" fullWidth value={qty} onChange={(e) => setQty(e.target.value)} style={{ marginBottom: 12 }} />
                     <TextField type="date" label="Date Issued" InputLabelProps={{ shrink: true }} fullWidth value={dateIssued} onChange={(e) => setDateIssued(e.target.value)} style={{ marginBottom: 12 }} />

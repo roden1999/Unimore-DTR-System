@@ -7,8 +7,7 @@ import {
 } from '@material-ui/core';
 import {
     PeopleAlt, HomeWork, EventNote,
-    Today, AccountCircle, PeopleAltSharp, Schedule, AssignmentInd, Home,
-    AttachMoney, Receipt
+    Today, AccountCircle, Schedule, AssignmentInd, Home, Dashboard, FlightTakeoff, AccessTime, AssignmentTurnedIn,
 } from '@material-ui/icons';
 import MenuIcon from '@material-ui/icons/Menu';
 import { makeStyles } from '@material-ui/core/styles';
@@ -17,12 +16,14 @@ import Employee from "./employee";
 import Department from "./department";
 import TimeLogs from "./timeLogs";
 import HolidaySchedule from "./holidaySchedule";
-import User from "./user";
 import Shifts from "./shifts";
 import ShiftAssignment from "./shiftAssignment";
-import SalaryAndDeductions from "./salaryAndDeductions";
-import Payroll from "./payroll";
+import HRDashboard from './hr/HRDashboard';
 import UserContext from './context/userContext';
+import NotificationBell from './common/NotificationBell';
+import WorkflowBoard from './workflows/WorkflowBoard';
+import { leaveConfig, overtimeConfig } from './workflows/workflowConfigs';
+import ApprovalCenter from './management/ApprovalCenter';
 
 const drawerWidth = 240;
 
@@ -39,14 +40,14 @@ const useStyles = makeStyles((theme) => ({
 
     menuButton: { marginRight: theme.spacing(2) },
 
-    drawerPaper: { width: drawerWidth, backgroundColor: '#FFFFFF' },
+    drawerPaper: { width: drawerWidth, backgroundColor: theme.palette.background.paper },
 
     toolbar: theme.mixins.toolbar,
 
     content: {
         flexGrow: 1,
         padding: theme.spacing(3),
-        backgroundColor: '#F4F6FB',
+        backgroundColor: theme.palette.background.default,
         minHeight: '100vh',
         marginLeft: 0,
         transition: "margin .3s",
@@ -60,8 +61,8 @@ const useStyles = makeStyles((theme) => ({
     navItem: {
         margin: '4px 12px',
         borderRadius: 10,
-        color: '#4B5563',
-        '& .MuiListItemIcon-root': { minWidth: 40, color: '#6B7280' },
+        color: theme.palette.text.secondary,
+        '& .MuiListItemIcon-root': { minWidth: 40, color: theme.palette.text.secondary },
     },
     navItemActive: {
         backgroundColor: 'rgba(79,115,255,0.10)',
@@ -80,15 +81,16 @@ const useStyles = makeStyles((theme) => ({
 
 // Map between browser routes and page labels.
 const PATH_TO_PAGE = {
+    '/dashboard': 'Dashboard',
     '/employee': 'Employee',
     '/department': 'Department',
     '/timelogs': 'Time Logs',
     '/holiday': 'Holiday Schedule',
     '/shifts': 'Shifts',
     '/shift-assignment': 'Shift Assignment',
-    '/salary': 'Salary & Deductions',
-    '/payroll': 'Payroll',
-    '/users': 'Users',
+    '/leave-requests': 'Leave Requests',
+    '/overtime-requests': 'Overtime Requests',
+    '/hr/approvals': 'HR Approvals',
 };
 
 function Main(props) {
@@ -125,16 +127,17 @@ function Main(props) {
     };
 
     const navItems = [
+        { label: "Dashboard", path: "/dashboard", icon: <Dashboard /> },
         { label: "Employee", path: "/employee", icon: <PeopleAlt /> },
         { label: "Department", path: "/department", icon: <HomeWork /> },
         { label: "Time Logs", path: "/timelogs", icon: <EventNote /> },
         { label: "Holiday Schedule", path: "/holiday", icon: <Today /> },
         { label: "Shifts", path: "/shifts", icon: <Schedule /> },
         { label: "Shift Assignment", path: "/shift-assignment", icon: <AssignmentInd /> },
-        { label: "Salary & Deductions", path: "/salary", icon: <AttachMoney /> },
-        { label: "Payroll", path: "/payroll", icon: <Receipt /> },
+        { label: "Leave Requests", path: "/leave-requests", icon: <FlightTakeoff /> },
+        { label: "Overtime Requests", path: "/overtime-requests", icon: <AccessTime /> },
     ];
-    if (role === "Administrator") navItems.push({ label: "Users", path: "/users", icon: <PeopleAltSharp /> });
+    if (role === "HR" || role === "Administrator") navItems.push({ label: "HR Approvals", path: "/hr/approvals", icon: <AssignmentTurnedIn /> });
 
     const go = (to) => {
         navigate(to);
@@ -203,6 +206,8 @@ function Main(props) {
                         </IconButton>
                     </Tooltip>
 
+                    <NotificationBell navigate={navigate} />
+
                     <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)}>
                         <Badge variant="dot" color="secondary" classes={{ badge: classes.customBadge }}>
                             <Avatar className={classes.userAvatar}>
@@ -255,15 +260,16 @@ function Main(props) {
             <main className={`${classes.content} ${drawerOpen ? classes.contentShift : ""}`}>
                 <div className={classes.toolbar} />
 
+                {pageName === "Dashboard" && <HRDashboard />}
                 {pageName === "Employee" && <Employee />}
                 {pageName === "Department" && <Department />}
                 {pageName === "Time Logs" && <TimeLogs />}
                 {pageName === "Holiday Schedule" && <HolidaySchedule />}
                 {pageName === "Shifts" && <Shifts />}
                 {pageName === "Shift Assignment" && <ShiftAssignment />}
-                {pageName === "Salary & Deductions" && <SalaryAndDeductions />}
-                {pageName === "Payroll" && <Payroll />}
-                {pageName === "Users" && role === "Administrator" && <User />}
+                {pageName === "Leave Requests" && <WorkflowBoard {...leaveConfig} />}
+                {pageName === "Overtime Requests" && <WorkflowBoard {...overtimeConfig} />}
+                {pageName === "HR Approvals" && <ApprovalCenter module="Human Resources" title="HR Approval Center" />}
 
             </main>
         </div>

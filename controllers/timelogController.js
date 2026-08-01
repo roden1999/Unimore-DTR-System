@@ -1,6 +1,7 @@
 const moment = require("moment");
 const XLSX = require("xlsx");
 const employeeModel = require("../models/employeeModel");
+const departmentModel = require("../models/departmentModel");
 const timelogModel = require("../models/timelogModel");
 const dtrCorrectionModel = require("../models/dtrCorrectionModel");
 const { computeEmployeeDTR } = require("../utils/dtrCalculator");
@@ -97,6 +98,7 @@ const rawList = async (request, response) => {
                 _id: log.Id,
                 employeeNo: log.EmployeeNo,
                 employeeName: emp ? `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim() : "",
+                image: emp ? emp.Image || "" : "",
                 timeInOut: log.TimeInOut,
                 dateTime: log.DateTime,
             };
@@ -174,6 +176,7 @@ const detailedList = async (request, response) => {
                 _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim(),
+                image: emp.Image || "",
                 department: dept ? dept.Department : "",
                 timeLogs: filteredLogs,
                 totalDays: totalDays.toFixed(0),
@@ -227,15 +230,33 @@ const dtrCorrection = async (request, response) => {
 
         const data = [];
         for (const emp of employees) {
-            const corrections = empNos.length > 0
-                ? await dtrCorrectionModel.getByEmployeeNosAndDateRange([emp.EmployeeNo], fromDate, toDate, 0, 1000)
-                : await dtrCorrectionModel.getByDateRange(fromDate, toDate, offset, DTR_PER_PAGE);
+            const corrections = await dtrCorrectionModel.getByEmployeeNosAndDateRange(
+                [emp.EmployeeNo], fromDate, toDate, 0, 1000
+            );
+            const department = emp.DepartmentId
+                ? await departmentModel.findByIdRaw(emp.DepartmentId)
+                : null;
 
             data.push({
                 _id: emp.Id,
                 employeeNo: emp.EmployeeNo,
                 employeeName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName}`.trim(),
-                corrections,
+                image: emp.Image || "",
+                department: department ? department.Department : "",
+                timeLogs: corrections.map(correction => ({
+                    id: correction.Id,
+                    empId: emp.Id,
+                    empNo: emp.EmployeeNo,
+                    empName: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName}`.trim(),
+                    department: emp.DepartmentId,
+                    day: moment(correction.Date).format("dddd"),
+                    date: correction.Date,
+                    timeIn: correction.TimeIn || "",
+                    timeOut: correction.TimeOut || "",
+                    remarks: correction.Remarks || "",
+                    reason: correction.Reason || "",
+                    breakTime: Boolean(correction.BreakTime),
+                })),
             });
         }
 
@@ -245,4 +266,48 @@ const dtrCorrection = async (request, response) => {
     }
 };
 
-module.exports = { uploadXls, importLogs, rawList, totalLogs, timelogOptions, detailedList, dtrCorrection };
+const printRawList = async (request, response) => {
+    try {
+        const fromDate = request.body.fromDate || moment("01/01/2020", "YYYY-MM-DD").toDate();
+        const toDate = request.body.toDate || new Date();
+        const empNos = Object.values(request.body.selectedLogs || {}).map(l => l.value);
+        const logs = empNos.length > 0
+            ? await timelogModel.getByEmployeeNosAndDateRange(empNos, fromDate, toDate)
+            : await timelogModel.getAllByDateRange(fromDate, toDate);
+        const result = await Promise.all(logs.map(async log => {
+            const emp = await employeeModel.findByEmployeeNo(log.EmployeeNo);
+            return { _id: log.Id, employeeNo: log.EmployeeNo,
+                employeeName: emp ? `${emp.LastName}, ${emp.FirstName} ${emp.MiddleName} ${emp.Suffix}`.trim() : "",
+                image: emp ? emp.Image || "" : "", timeInOut: log.TimeInOut, dateTime: log.DateTime };
+        }));
+        response.json(result);
+    } catch (error) { response.status(500).json({ error: error.message }); }
+};
+
+const approveDtrCorrection = async (request, response) => {
+    try {
+        const data = request.body || {};
+        const errors = [];
+        if (!data.employeeNo) errors.push({ error: "Employee is required." });
+        if (!data.employeeName) errors.push({ error: "Employee name is required." });
+        if (!data.date || !moment(data.date).isValid()) errors.push({ error: "A valid date is required." });
+        if (!data.remarks) errors.push({ error: "Remarks must have a value." });
+
+        const leaveRemarks = ["SL w/ Pay", "SL w/o Pay", "VL w/ Pay", "VL w/o Pay", "Offset", "Personal Leave", "Emergency Leave"];
+        const requiresTime = data.remarks && !leaveRemarks.includes(data.remarks);
+        if (requiresTime && !data.timeIn) errors.push({ error: "Time In cannot be empty." });
+        if (requiresTime && !data.timeOut) errors.push({ error: "Time Out cannot be empty." });
+        if (errors.length) return response.status(400).json({ error: errors });
+
+        const correction = await dtrCorrectionModel.create({
+            ...data,
+            timeIn: leaveRemarks.includes(data.remarks) ? "" : data.timeIn,
+            timeOut: leaveRemarks.includes(data.remarks) ? "" : data.timeOut,
+        });
+        response.status(200).json({ dtrc: `${correction.EmployeeName} Record successfully filed.` });
+    } catch (error) {
+        response.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { uploadXls, importLogs, rawList, printRawList, totalLogs, timelogOptions, detailedList, dtrCorrection, approveDtrCorrection };

@@ -26,7 +26,15 @@ const connectToSqlServer = async () => {
         console.log("Connected to SQL Server");
         return pool;
     } catch (error) {
-        console.error("SQL Server connection error:", error.message);
+        // console.error("SQL Server connection error:", error.message);
+        console.error({
+            message: error.message,
+            code: error.code,
+            number: error.number,
+            state: error.state,
+            class: error.class,
+            originalError: error.originalError
+        });
         process.exit(1);
     }
 };

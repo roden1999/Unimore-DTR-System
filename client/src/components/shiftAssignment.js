@@ -12,14 +12,15 @@ import { MuiPickersUtilsProvider, KeyboardDatePicker } from '@material-ui/picker
 import Select from './common/Dropdown';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import EmployeeAvatar from './common/EmployeeAvatar';
 
 const axios = require("axios");
 const moment = require("moment");
 
-const useStyles = makeStyles(() => ({
-    root: { backgroundColor: 'white', padding: 20, borderRadius: 10, minHeight: '90vh' },
+const useStyles = makeStyles((theme) => ({
+    root: { backgroundColor: theme.palette.background.paper, padding: 20, borderRadius: 10, minHeight: '90vh' },
     section: { marginBottom: 24 },
-    label: { fontSize: 12, color: '#555', marginBottom: 4 },
+    label: { fontSize: 12, color: theme.palette.text.secondary, marginBottom: 4 },
 }));
 
 function ShiftAssignment() {
@@ -162,7 +163,7 @@ function ShiftAssignment() {
                         }
                         {overrides.map((o) => (
                             <TableRow key={o.id}>
-                                <TableCell>{o.employeeNo} - {o.employeeName}</TableCell>
+                                <TableCell><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><EmployeeAvatar image={o.image} name={o.employeeName} size={34} />{o.employeeNo} - {o.employeeName}</div></TableCell>
                                 <TableCell>{o.shiftName} ({o.timeStart} - {o.timeEnd})</TableCell>
                                 <TableCell>{o.startDate}</TableCell>
                                 <TableCell>{o.endDate}</TableCell>
@@ -184,7 +185,7 @@ function ShiftAssignment() {
                     </DialogContentText>
                     {conflicts.map((c, i) => (
                         <div key={i} style={{ marginBottom: 8 }}>
-                            <strong>{c.employeeName}</strong>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><EmployeeAvatar image={c.image} name={c.employeeName} size={34} /><strong>{c.employeeName}</strong></div>
                             <ul style={{ margin: '4px 0' }}>
                                 {c.existing.map((e, j) => (
                                     <li key={j}>{e.shiftName}: {e.startDate} - {e.endDate}</li>

@@ -41,4 +41,30 @@ const getByDateRange = async (fromDate, toDate, offset, limit) => {
     return result.recordset;
 };
 
-module.exports = { findByEmployeeNoAndDate, getByEmployeeNosAndDateRange, getByDateRange };
+const create = async (correction) => {
+    const pool = getPool();
+    const result = await pool.request()
+        .input("EmployeeNo", sql.NVarChar, correction.employeeNo)
+        .input("EmployeeName", sql.NVarChar, correction.employeeName)
+        .input("Date", sql.DateTime, new Date(correction.date))
+        .input("TimeIn", sql.NVarChar, correction.timeIn || null)
+        .input("TimeOut", sql.NVarChar, correction.timeOut || null)
+        .input("OtHours", sql.Decimal(8, 2), Number(correction.otHours) || 0)
+        .input("BreakTime", sql.Bit, correction.breakTime ? 1 : 0)
+        .input("BreakTimeHrs", sql.Decimal(8, 2), Number(correction.breakTimeHrs) || 0)
+        .input("HoursWork", sql.Decimal(8, 2), Number(correction.hourswork) || 0)
+        .input("Undertime", sql.Decimal(8, 2), Number(correction.undertime) || 0)
+        .input("Remarks", sql.NVarChar, correction.remarks || null)
+        .input("Reason", sql.NVarChar, correction.reason || null)
+        .input("DateApproved", sql.DateTime, new Date())
+        .query(`INSERT INTO DtrCorrections
+                (EmployeeNo, EmployeeName, [Date], TimeIn, TimeOut, OtHours, BreakTime,
+                 BreakTimeHrs, HoursWork, Undertime, Remarks, Reason, DateApproved)
+                OUTPUT INSERTED.*
+                VALUES (@EmployeeNo, @EmployeeName, @Date, @TimeIn, @TimeOut, @OtHours,
+                        @BreakTime, @BreakTimeHrs, @HoursWork, @Undertime, @Remarks,
+                        @Reason, @DateApproved)`);
+    return result.recordset[0];
+};
+
+module.exports = { findByEmployeeNoAndDate, getByEmployeeNosAndDateRange, getByDateRange, create };

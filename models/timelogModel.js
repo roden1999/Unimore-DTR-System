@@ -38,6 +38,17 @@ const getByDateRange = async (fromDate, toDate, offset, limit) => {
     return result.recordset;
 };
 
+const getAllByDateRange = async (fromDate, toDate) => {
+    const pool = getPool();
+    const result = await pool.request()
+        .input("FromDate", sql.DateTime, new Date(fromDate))
+        .input("ToDate", sql.DateTime, new Date(toDate))
+        .query(`SELECT * FROM TimeLogs
+                WHERE DateTime >= @FromDate AND DateTime < DATEADD(day, 1, @ToDate)
+                ORDER BY DateTime DESC`);
+    return result.recordset;
+};
+
 const countByEmployeeNosAndDateRange = async (employeeNos, fromDate, toDate) => {
     const pool = getPool();
     const noList = employeeNos.map(n => `'${n.replace(/'/g, "''")}'`).join(",");
@@ -128,7 +139,7 @@ const getNextDayOT = async (employeeNo, nextDayStart, nextDayEnd) => {
 };
 
 module.exports = {
-    insert, getByEmployeeNosAndDateRange, getByDateRange,
+    insert, getByEmployeeNosAndDateRange, getByDateRange, getAllByDateRange,
     countByEmployeeNosAndDateRange, countByDateRange,
     getTimeIn, getTimeOut, getBreakOut, getBreakIn, getNextDayOT
 };

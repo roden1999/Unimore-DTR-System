@@ -11,12 +11,14 @@ import {
   Box
 } from '@material-ui/core';
 import { Visibility, VisibilityOff } from '@material-ui/icons';
+import { useTheme } from '@material-ui/core/styles';
 import UserContext from './context/userContext';
 import axios from 'axios';
 import moment from 'moment';
 
 const Login = () => {
   const { setUserData } = useContext(UserContext);
+  const theme = useTheme();
 
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
@@ -26,13 +28,16 @@ const Login = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const onLogin = async () => {
+  const onLogin = async (event) => {
+    if (event) event.preventDefault();
+    if (signInLoader) return;
     setSignInLoader(true);
     const url = window.apihost + "login";
 
     await axios.post(url, { userName, password })
       .then((response) => {
         sessionStorage.setItem("auth-token", response.data.token);
+        axios.defaults.headers.common['auth-token'] = response.data.token;
         sessionStorage.setItem("userData", JSON.stringify(response.data));
         sessionStorage.setItem("user", JSON.stringify(response.data.user));
 
@@ -89,7 +94,7 @@ const Login = () => {
           padding: 30,
           borderRadius: 20,
           backdropFilter: "blur(10px)",
-          background: "rgba(255, 255, 255, 0.85)",
+          background: theme.palette.type === 'dark' ? "rgba(31, 41, 55, 0.94)" : "rgba(255, 255, 255, 0.88)",
           boxShadow: "0px 10px 30px rgba(0,0,0,0.2)"
         }}
       >
@@ -110,6 +115,7 @@ const Login = () => {
           </Typography>
         )}
 
+        <form onSubmit={onLogin}>
         {/* Username */}
         <TextField
           fullWidth
@@ -132,7 +138,7 @@ const Login = () => {
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton onClick={() => setVisiblePassword(!visiblePassword)}>
+                <IconButton type="button" onClick={() => setVisiblePassword(!visiblePassword)}>
                   {visiblePassword ? <Visibility /> : <VisibilityOff />}
                 </IconButton>
               </InputAdornment>
@@ -151,11 +157,12 @@ const Login = () => {
             borderRadius: 30,
             textTransform: "none"
           }}
-          onClick={onLogin}
           disabled={signInLoader}
+          type="submit"
         >
           {!signInLoader ? "Sign In" : <CircularProgress size={26} />}
         </Button>
+        </form>
 
         {/* Forgot Password */}
         <div style={{ textAlign: "center", marginTop: 20 }}>
